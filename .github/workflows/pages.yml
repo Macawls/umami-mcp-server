@@ -25,7 +25,10 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Download styling
+      - name: Install pandoc
+        uses: pandoc/actions/setup@v1
+
+      - name: Get styles
         run: curl -O http://b.enjam.info/panam/styling.css
 
       - name: Build site
