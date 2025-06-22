@@ -1,0 +1,6 @@
+# Example configuration for Umami MCP Server
+# Copy this file to config.yaml and update with your values
+
+umami_url: https://analytics.example.com
+username: your-username
+password: your-password

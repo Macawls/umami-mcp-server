@@ -1,0 +1,26 @@
+# Binaries
+umami-mcp
+umami-mcp.exe
+
+llms*
+
+# Test coverage
+*.out
+coverage.html
+
+# Config files with secrets
+config.yaml
+.env
+
+# GoReleaser
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
