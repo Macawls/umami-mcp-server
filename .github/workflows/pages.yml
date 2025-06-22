@@ -25,6 +25,12 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Download styling
+        run: curl -O http://b.enjam.info/panam/styling.css
+
+      - name: Build site
+        run: pandoc --css=styling.css -V lang=en -V highlighting-css= --mathjax --smart --to=html5 README.md -o index.html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
