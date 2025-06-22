@@ -29,10 +29,16 @@ jobs:
         uses: pandoc/actions/setup@v1
 
       - name: Get styles
-        run: curl -O http://b.enjam.info/panam/styling.css
+        run: curl -L -o styling.css https://b.enjam.info/panam/styling.css
 
       - name: Build site
-        run: pandoc --css=styling.css --to=html5 README.md -o index.html
+        run: |
+          pandoc --standalone \
+            --self-contained \
+            --metadata title="Umami MCP Server" \
+            --css=styling.css \
+            --to=html5 \
+            README.md -o index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
