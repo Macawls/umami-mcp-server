@@ -18,26 +18,28 @@ jobs:
         go: ['1.22', '1.23']
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
-      
+
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out ./...
-      
+        run: go test -v -race -coverprofile coverage.out ./...
+        shell: bash
+
       - name: Build
         run: go build -v .
+        shell: bash
 
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-go@v5
         with:
           go-version: 'stable'
-      
+
       - uses: golangci/golangci-lint-action@v6
         with:
           version: latest
