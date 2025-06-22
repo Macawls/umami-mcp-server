@@ -1,6 +1,6 @@
 # Umami MCP Server
 
-Connect your Umami Analytics to any MCP client - Claude Desktop, VS Code, Zed, and more.
+Connect your Umami Analytics to any MCP client - Claude Desktop, VS Code, Cursor, Zed, and more.
 
 ## Quick Start
 
@@ -25,7 +25,7 @@ Add to your Claude Desktop config:
     "umami": {
       "command": "path/to/umami-mcp",
       "env": {
-        "UMAMI_URL": "https://your-analytics.com",
+        "UMAMI_URL": "https://your-umami-instance.com",
         "UMAMI_USERNAME": "your-username",
         "UMAMI_PASSWORD": "your-password"
       }
@@ -48,7 +48,7 @@ Add to your VS Code settings (`Ctrl/Cmd + ,` → Extensions → Cline):
     "umami": {
       "command": "path/to/umami-mcp",
       "env": {
-        "UMAMI_URL": "https://your-analytics.com",
+        "UMAMI_URL": "https://your-umami-instance.com",
         "UMAMI_USERNAME": "your-username", 
         "UMAMI_PASSWORD": "your-password"
       }
@@ -58,6 +58,30 @@ Add to your VS Code settings (`Ctrl/Cmd + ,` → Extensions → Cline):
 ```
 
 Or add to `.vscode/settings.json` in your workspace.
+</details>
+
+<details>
+<summary><strong>Cursor</strong></summary>
+
+1. In Cursor, press `Ctrl/Cmd + Shift + P` to open command palette
+2. Search for "Cursor Settings" and select "Cursor Settings: Open User Settings"
+3. Navigate to the MCP section
+4. Add the Umami server configuration:
+
+```json
+{
+  "umami": {
+    "command": "path/to/umami-mcp",
+    "env": {
+      "UMAMI_URL": "https://your-umami-instance.com",
+      "UMAMI_USERNAME": "your-username",
+      "UMAMI_PASSWORD": "your-password"
+    }
+  }
+}
+```
+
+The Agent will automatically use the Umami tools when relevant. You can also enable auto-run to skip approval prompts.
 </details>
 
 <details>
@@ -73,7 +97,7 @@ Add to your Zed settings:
       "umami": {
         "command": "path/to/umami-mcp",
         "env": {
-          "UMAMI_URL": "https://your-analytics.com",
+          "UMAMI_URL": "https://your-umami-instance.com",
           "UMAMI_USERNAME": "your-username",
           "UMAMI_PASSWORD": "your-password"
         }
@@ -98,32 +122,46 @@ For any MCP-compatible client, you'll need:
 Check your client's documentation for specific configuration format.
 </details>
 
-## Available Tools
-
-- **get_websites** - List all your websites
-- **get_stats** - Get visitor statistics
-- **get_pageviews** - View page traffic over time
-- **get_metrics** - See browsers, countries, devices, and more
-- **get_active** - Current active visitors
-
 ## Example Prompts
 
-- "Show me all my Umami websites"
-- "Get stats for website [ID] from last week"
-- "What browsers are visitors using?"
-- "How many active visitors right now?"
+### Analytics & Traffic
+- "Give me a comprehensive analytics report for my website over the last 30 days"
+- "Which pages are getting the most traffic this month? Show me the top 10"
+- "Analyze my website's traffic patterns - when do I get the most visitors?"
+
+### User Insights
+- "Where are my visitors coming from? Break it down by country and city"
+- "What devices and browsers are my users using?"
+- "Show me the user journey - what pages do visitors typically view in sequence?"
+
+### Real-time Monitoring
+- "How many people are on my website right now? What pages are they viewing?"
+- "Is my website experiencing any issues? Check if traffic has dropped significantly"
+
+### Content & Campaign Analysis
+- "Which blog posts should I update? Show me articles with declining traffic"
+- "How did my recent email campaign perform? Track visitors from the campaign UTM"
+- "Compare traffic from different social media platforms"
 
 ## Alternative Configuration
 
 Instead of environment variables, create a `config.yaml` file next to the binary:
 
 ```yaml
-umami_url: https://your-analytics.com
+umami_url: https://your-umami-instance.com
 username: your-username
 password: your-password
 ```
 
 Environment variables take priority over the config file.
+
+## Build from Source
+
+```bash
+git clone https://github.com/Macawls/umami-mcp-server.git
+cd umami-mcp-server
+go build -o umami-mcp
+```
 
 ## Troubleshooting
 
@@ -141,13 +179,13 @@ Environment variables take priority over the config file.
 - Verify the binary path is absolute
 - Try running the binary directly to check for errors
 
-## Build from Source
+## Available Tools
 
-```bash
-git clone https://github.com/Macawls/umami-mcp-server.git
-cd umami-mcp-server
-go build -o umami-mcp
-```
+- **get_websites** - List all your websites
+- **get_stats** - Get visitor statistics
+- **get_pageviews** - View page traffic over time
+- **get_metrics** - See browsers, countries, devices, and more
+- **get_active** - Current active visitors
 
 ## License
 
