@@ -200,7 +200,7 @@ func TestUmamiClient_GetMetrics_WrappedInData(t *testing.T) {
 	}
 }
 
-func TestUmamiClient_GetPageViews_DirectArray(t *testing.T) {
+func TestUmamiClient_GetPageViews_ObjectResponse(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/websites/test-website-id/pageviews" {
 			t.Errorf("Expected pageviews path, got %s", r.URL.Path)
@@ -212,11 +212,14 @@ func TestUmamiClient_GetPageViews_DirectArray(t *testing.T) {
 		}
 		
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`[
-			{"t": "2025-01-01", "y": 100},
-			{"t": "2025-01-02", "y": 150},
-			{"t": "2025-01-03", "y": 200}
-		]`))
+		w.Write([]byte(`{
+			"pageviews": [
+				{"t": "2025-01-01", "y": 100},
+				{"t": "2025-01-02", "y": 150},
+				{"t": "2025-01-03", "y": 200}
+			],
+			"sessions": []
+		}`))
 	}))
 	defer server.Close()
 	
@@ -240,18 +243,14 @@ func TestUmamiClient_GetPageViews_DirectArray(t *testing.T) {
 	}
 }
 
-func TestUmamiClient_GetActive_DirectArray(t *testing.T) {
+func TestUmamiClient_GetActive_SingleValue(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/websites/test-website-id/active" {
 			t.Errorf("Expected active path, got %s", r.URL.Path)
 		}
 		
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`[
-			{"x": "/", "y": 5},
-			{"x": "/blog", "y": 3},
-			{"x": "/about", "y": 2}
-		]`))
+		w.Write([]byte(`{"x": 10}`))
 	}))
 	defer server.Close()
 	
@@ -266,12 +265,12 @@ func TestUmamiClient_GetActive_DirectArray(t *testing.T) {
 		t.Fatalf("GetActive failed: %v", err)
 	}
 	
-	if len(active) != 3 {
-		t.Errorf("Expected 3 active pages, got %d", len(active))
+	if len(active) != 1 {
+		t.Errorf("Expected 1 active metric, got %d", len(active))
 	}
 	
-	if active[0].X != "/" || active[0].Y != 5 {
-		t.Errorf("Expected / with 5 active users, got %s with %d", active[0].X, active[0].Y)
+	if active[0].X != "10" || active[0].Y != 10 {
+		t.Errorf("Expected 10 active users, got %s with %d", active[0].X, active[0].Y)
 	}
 }
 
