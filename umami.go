@@ -161,12 +161,19 @@ func (c *UmamiClient) GetPageViews(websiteID, startDate, endDate, unit string) (
 		return nil, err
 	}
 
-	var pageviews []PageView
-	if err := json.Unmarshal(data, &pageviews); err != nil {
-		return nil, err
+	var response struct {
+		PageViews []PageView `json:"pageviews"`
+		Sessions  []PageView `json:"sessions"`
+	}
+	if err := json.Unmarshal(data, &response); err != nil {
+		var pageviews []PageView
+		if err2 := json.Unmarshal(data, &pageviews); err2 != nil {
+			return nil, err
+		}
+		return pageviews, nil
 	}
 
-	return pageviews, nil
+	return response.PageViews, nil
 }
 
 type Metric struct {
@@ -201,10 +208,23 @@ func (c *UmamiClient) GetActive(websiteID string) ([]Metric, error) {
 		return nil, err
 	}
 
-	var metrics []Metric
-	if err := json.Unmarshal(data, &metrics); err != nil {
-		return nil, err
+	var response []struct {
+		X int `json:"x"`
+		Y int `json:"y"`
+	}
+	if err := json.Unmarshal(data, &response); err != nil {
+		var singleResponse struct {
+			X int `json:"x"`
+		}
+		if err2 := json.Unmarshal(data, &singleResponse); err2 != nil {
+			return nil, err
+		}
+		return []Metric{{X: fmt.Sprintf("%d", singleResponse.X), Y: singleResponse.X}}, nil
 	}
 
+	metrics := make([]Metric, len(response))
+	for i, r := range response {
+		metrics[i] = Metric{X: fmt.Sprintf("%d", r.X), Y: r.Y}
+	}
 	return metrics, nil
 }
