@@ -1,6 +1,31 @@
+[![Test](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml)
+[![Deploy to GitHub Pages](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml)
+
 # Umami MCP Server
 
 Connect your Umami Analytics to any MCP client - Claude Desktop, VS Code, Cursor, Zed, and more.
+
+## Prerequisites
+
+### Setting up Umami Access
+
+1. **Create a dedicated user** in your Umami instance:
+   - Log in to your Umami dashboard as an admin
+   - Go to Settings → Users
+   - Click "Add user"
+   - Fill in the username (e.g., `mcp-analytics`) and password
+   - Select "View only" role
+   - Save the password
+
+2. **Assign website access**:
+   - The new user will automatically have read-only access to all websites
+   - To limit access to specific websites:
+     - Click on the user after creation
+     - Go to the "Websites" tab
+     - Select which websites this user can access
+   - Save your changes
+
+> **Security Tip**: Always use a dedicated read-only user for MCP access rather than your admin account.
 
 ## Quick Start
 
@@ -153,7 +178,7 @@ username: your-username
 password: your-password
 ```
 
-Environment variables take priority over the config file.
+Environment variables take priority over the config file. This allows you to override config file settings without modifying the file itself.
 
 ## Build from Source
 
