@@ -25,21 +25,48 @@ func NewMCPServer(client *UmamiClient) *MCPServer {
 func (s *MCPServer) Run() error {
 	scanner := bufio.NewScanner(s.stdin)
 	for scanner.Scan() {
-		var req Request
-		if err := json.Unmarshal(scanner.Bytes(), &req); err != nil {
+		var rawMsg json.RawMessage
+		if err := json.Unmarshal(scanner.Bytes(), &rawMsg); err != nil {
 			s.sendError(nil, -32700, "Parse error")
 			continue
 		}
 
-		switch req.Method {
-		case "initialize":
-			s.handleInitialize(req)
-		case "tools/list":
-			s.handleToolsList(req)
-		case "tools/call":
-			s.handleToolCall(req)
-		default:
-			s.sendError(req.ID, -32601, "Method not found")
+		var msgType struct {
+			ID     interface{} `json:"id"`
+			Method string      `json:"method"`
+		}
+		if err := json.Unmarshal(rawMsg, &msgType); err != nil {
+			s.sendError(nil, -32700, "Parse error")
+			continue
+		}
+
+		if msgType.ID != nil {
+			var req Request
+			if err := json.Unmarshal(rawMsg, &req); err != nil {
+				s.sendError(nil, -32700, "Parse error")
+				continue
+			}
+
+			switch req.Method {
+			case "initialize":
+				s.handleInitialize(req)
+			case "tools/list":
+				s.handleToolsList(req)
+			case "tools/call":
+				s.handleToolCall(req)
+			case "resources/list":
+				s.sendResult(req.ID, map[string]interface{}{"resources": []interface{}{}})
+			case "prompts/list":
+				s.sendResult(req.ID, map[string]interface{}{"prompts": []interface{}{}})
+			default:
+				s.sendError(req.ID, -32601, "Method not found")
+			}
+		} else {
+			switch msgType.Method {
+			case "notifications/initialized":
+			case "notifications/cancelled":
+			default:
+			}
 		}
 	}
 	return scanner.Err()
