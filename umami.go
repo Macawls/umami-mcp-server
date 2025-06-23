@@ -161,14 +161,12 @@ func (c *UmamiClient) GetPageViews(websiteID, startDate, endDate, unit string) (
 		return nil, err
 	}
 
-	var result struct {
-		Data []PageView `json:"data"`
-	}
-	if err := json.Unmarshal(data, &result); err != nil {
+	var pageviews []PageView
+	if err := json.Unmarshal(data, &pageviews); err != nil {
 		return nil, err
 	}
 
-	return result.Data, nil
+	return pageviews, nil
 }
 
 type Metric struct {
@@ -189,14 +187,12 @@ func (c *UmamiClient) GetMetrics(websiteID, startDate, endDate, metricType strin
 		return nil, err
 	}
 
-	var result struct {
-		Data []Metric `json:"data"`
-	}
-	if err := json.Unmarshal(data, &result); err != nil {
+	var metrics []Metric
+	if err := json.Unmarshal(data, &metrics); err != nil {
 		return nil, err
 	}
 
-	return result.Data, nil
+	return metrics, nil
 }
 
 func (c *UmamiClient) GetActive(websiteID string) ([]Metric, error) {
@@ -205,12 +201,10 @@ func (c *UmamiClient) GetActive(websiteID string) ([]Metric, error) {
 		return nil, err
 	}
 
-	var result struct {
-		Data []Metric `json:"data"`
-	}
-	if err := json.Unmarshal(data, &result); err != nil {
+	var metrics []Metric
+	if err := json.Unmarshal(data, &metrics); err != nil {
 		return nil, err
 	}
 
-	return result.Data, nil
+	return metrics, nil
 }
