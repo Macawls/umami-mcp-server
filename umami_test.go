@@ -14,7 +14,7 @@ func TestUmamiClient_Authenticate(t *testing.T) {
 		}
 		
 		var req map[string]string
-		json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewDecoder(r.Body).Decode(&req)
 		
 		if req["username"] != "testuser" || req["password"] != "testpass" {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -22,7 +22,7 @@ func TestUmamiClient_Authenticate(t *testing.T) {
 		}
 		
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"token": "test-token-123"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"token": "test-token-123"})
 	}))
 	defer server.Close()
 	
@@ -50,7 +50,7 @@ func TestUmamiClient_GetWebsites(t *testing.T) {
 		}
 		
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"data": []map[string]interface{}{
 				{
 					"id": "test-id-1",
@@ -103,7 +103,7 @@ func TestUmamiClient_GetStats(t *testing.T) {
 		}
 		
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"pageviews": map[string]int{"value": 1000, "change": 50},
 			"visitors": map[string]int{"value": 200, "change": 10},
 			"bounces": map[string]int{"value": 150, "change": -5},
@@ -144,7 +144,7 @@ func TestUmamiClient_GetMetrics_DirectArray(t *testing.T) {
 		}
 		
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`[
+		_, _ = w.Write([]byte(`[
 			{"x": "/blog/post1", "y": 150},
 			{"x": "/blog/post2", "y": 120},
 			{"x": "/about", "y": 80}
@@ -175,7 +175,7 @@ func TestUmamiClient_GetMetrics_DirectArray(t *testing.T) {
 func TestUmamiClient_GetMetrics_WrappedInData(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"data": [
 				{"x": "/blog/post1", "y": 150},
 				{"x": "/blog/post2", "y": 120}
@@ -212,7 +212,7 @@ func TestUmamiClient_GetPageViews_ObjectResponse(t *testing.T) {
 		}
 		
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"pageviews": [
 				{"t": "2025-01-01", "y": 100},
 				{"t": "2025-01-02", "y": 150},
@@ -250,7 +250,7 @@ func TestUmamiClient_GetActive_SingleValue(t *testing.T) {
 		}
 		
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"x": 10}`))
+		_, _ = w.Write([]byte(`{"x": 10}`))
 	}))
 	defer server.Close()
 	
@@ -305,7 +305,7 @@ func TestUmamiClient_ErrorHandling(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
-				w.Write([]byte(tt.response))
+				_, _ = w.Write([]byte(tt.response))
 			}))
 			defer server.Close()
 			
