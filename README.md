@@ -1,5 +1,4 @@
-[![Test](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml)
-[![Deploy to GitHub Pages](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml)
+[![Test](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml) [![Release](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml) [![Deploy to GitHub Pages](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml) 
 
 # Umami MCP Server
 
