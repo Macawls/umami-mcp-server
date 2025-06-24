@@ -1,0 +1,106 @@
+[
+  {
+    "name": "get_websites",
+    "description": "Get list of all websites configured in Umami. Returns website ID, name, domain, and createdAt timestamp. CRITICAL: Always call this FIRST before any analytics queries to (1) verify the website exists, (2) check when it was created, and (3) ensure you don't request data from before the creation date. Analytics data only exists from createdAt onwards.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "get_stats",
+    "description": "Get aggregated statistics for a website including pageviews, visitors (unique sessions), bounces, and totaltime. IMPORTANT: First check website createdAt date. If requesting 'last X days', verify that X days ago is after createdAt - if not, adjust start_date to createdAt. The 'change' field compares with the previous period of same length. Note: 'visitors' = unique sessions, 'bounces' = single-pageview sessions, 'totaltime' = sum of time between pageviews (excludes bounces).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "website_id": {
+          "type": "string",
+          "description": "The website ID from get_websites"
+        },
+        "start_date": {
+          "type": "string",
+          "description": "Start date as Unix timestamp in milliseconds (13 digits). MUST be after website createdAt. For 'last X days': current_time_ms - (X * 86400000). Example: last 7 days = now - 604800000"
+        },
+        "end_date": {
+          "type": "string",
+          "description": "End date as Unix timestamp in milliseconds (13 digits). Typically current timestamp. Must be after start_date"
+        }
+      },
+      "required": ["website_id", "start_date", "end_date"]
+    }
+  },
+  {
+    "name": "get_pageviews",
+    "description": "Get pageview and session data grouped by time unit. Returns 'pageviews' array (total views) and 'sessions' array (unique visitors) per time period. Time labels in the 't' field correspond to the unit parameter. Always verify the website was created before your start_date, otherwise you'll get empty or misleading results.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "website_id": {
+          "type": "string",
+          "description": "The website ID from get_websites"
+        },
+        "start_date": {
+          "type": "string",
+          "description": "Start date as Unix timestamp in milliseconds (13 digits). MUST be after website createdAt date"
+        },
+        "end_date": {
+          "type": "string",
+          "description": "End date as Unix timestamp in milliseconds (13 digits). Must be after start_date"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Time unit for grouping data. Determines granularity and number of data points returned",
+          "enum": ["hour", "day", "month", "year"],
+          "default": "day"
+        }
+      },
+      "required": ["website_id", "start_date", "end_date"]
+    }
+  },
+  {
+    "name": "get_metrics",
+    "description": "Get metrics for a website. Returns array with 'x' (metric value) and 'y' (count). For 'url': page paths without query params. For 'referrer': traffic sources (empty string = direct). For 'browser/os/device': user agents. For 'country': 2-letter ISO codes. IMPORTANT: Check website createdAt first - requesting data before creation returns empty results.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "website_id": {
+          "type": "string",
+          "description": "The website ID from get_websites"
+        },
+        "start_date": {
+          "type": "string",
+          "description": "Start date as Unix timestamp in milliseconds (13 digits). MUST be after website createdAt"
+        },
+        "end_date": {
+          "type": "string",
+          "description": "End date as Unix timestamp in milliseconds (13 digits). Must be after start_date"
+        },
+        "metric_type": {
+          "type": "string",
+          "description": "Type of metric to retrieve. Each returns different data in 'x' field",
+          "enum": ["url", "referrer", "browser", "os", "device", "country", "event"]
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Maximum results to return. Use higher values (50-100) for complete data. Default may miss important items",
+          "default": 10
+        }
+      },
+      "required": ["website_id", "start_date", "end_date", "metric_type"]
+    }
+  },
+  {
+    "name": "get_active",
+    "description": "Get count of current active visitors on the website in real-time. Returns array with 'x' field containing the visitor count as a string. No date parameters needed as this shows current state only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "website_id": {
+          "type": "string",
+          "description": "The website ID from get_websites"
+        }
+      },
+      "required": ["website_id"]
+    }
+  }
+]

@@ -2,11 +2,14 @@ package main
 
 import (
 	"bufio"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 )
+
+var toolsFS embed.FS
 
 type MCPServer struct {
 	client *UmamiClient
@@ -110,112 +113,18 @@ func (s *MCPServer) handleInitialize(req Request) {
 }
 
 func (s *MCPServer) handleToolsList(req Request) {
-	tools := []map[string]interface{}{
-		{
-			"name":        "get_websites",
-			"description": "Get list of all websites configured in Umami",
-			"inputSchema": map[string]interface{}{
-				"type":       "object",
-				"properties": map[string]interface{}{},
-			},
-		},
-		{
-			"name":        "get_stats",
-			"description": "Get statistics for a website. Returns pageviews, visitors, bounces, and total time. If all values are 0, verify your date range includes when data exists.",
-			"inputSchema": map[string]interface{}{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"website_id": map[string]interface{}{
-						"type":        "string",
-						"description": "The website ID from get_websites",
-					},
-					"start_date": map[string]interface{}{
-						"type":        "string",
-						"description": "Start date timestamp in milliseconds (13 digits, e.g. 1719259200000)",
-					},
-					"end_date": map[string]interface{}{
-						"type":        "string",
-						"description": "End date timestamp in milliseconds (13 digits, e.g. 1719345600000)",
-					},
-				},
-				"required": []string{"website_id", "start_date", "end_date"},
-			},
-		},
-		{
-			"name":        "get_pageviews",
-			"description": "Get page view data for a website over time",
-			"inputSchema": map[string]interface{}{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"website_id": map[string]interface{}{
-						"type":        "string",
-						"description": "The website ID from get_websites",
-					},
-					"start_date": map[string]interface{}{
-						"type":        "string",
-						"description": "Start date timestamp in milliseconds (13 digits)",
-					},
-					"end_date": map[string]interface{}{
-						"type":        "string",
-						"description": "End date timestamp in milliseconds (13 digits)",
-					},
-					"unit": map[string]interface{}{
-						"type":        "string",
-						"description": "Time unit for grouping data",
-						"enum":        []string{"hour", "day", "month", "year"},
-						"default":     "day",
-					},
-				},
-				"required": []string{"website_id", "start_date", "end_date"},
-			},
-		},
-		{
-			"name":        "get_metrics",
-			"description": "Get metrics for a website (browsers, OS, devices, pages, countries, etc)",
-			"inputSchema": map[string]interface{}{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"website_id": map[string]interface{}{
-						"type":        "string",
-						"description": "The website ID from get_websites",
-					},
-					"start_date": map[string]interface{}{
-						"type":        "string",
-						"description": "Start date timestamp in milliseconds (13 digits)",
-					},
-					"end_date": map[string]interface{}{
-						"type":        "string",
-						"description": "End date timestamp in milliseconds (13 digits)",
-					},
-					"metric_type": map[string]interface{}{
-						"type":        "string",
-						"description": "Type of metric to retrieve",
-						"enum":        []string{"url", "referrer", "browser", "os", "device", "country", "event"},
-					},
-					"limit": map[string]interface{}{
-						"type":        "integer",
-						"description": "Maximum number of results (default: 10)",
-						"default":     10,
-					},
-				},
-				"required": []string{"website_id", "start_date", "end_date", "metric_type"},
-			},
-		},
-		{
-			"name":        "get_active",
-			"description": "Get current active visitors for a website",
-			"inputSchema": map[string]interface{}{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"website_id": map[string]interface{}{
-						"type":        "string",
-						"description": "The website ID from get_websites",
-					},
-				},
-				"required": []string{"website_id"},
-			},
-		},
+	toolsData, err := toolsFS.ReadFile("mcp-tools-schema.json")
+	if err != nil {
+		s.sendError(req.ID, -32603, fmt.Sprintf("Failed to load tools: %v", err))
+		return
 	}
+
+	var tools []map[string]interface{}
+	if err := json.Unmarshal(toolsData, &tools); err != nil {
+		s.sendError(req.ID, -32603, fmt.Sprintf("Failed to parse tools: %v", err))
+		return
+	}
+
 	s.sendResult(req.ID, map[string]interface{}{"tools": tools})
 }
 func (s *MCPServer) handleToolCall(req Request) {
