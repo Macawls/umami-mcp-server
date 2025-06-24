@@ -4,7 +4,7 @@
 
 Connect your Umami Analytics to any MCP client - Claude Desktop, VS Code, Cursor, Zed, and more.
 
-![](.github/workflows/insights.PNG)
+<img src=".github/workflows/insights.PNG" height="400">
 
 ## Quick Start
 
