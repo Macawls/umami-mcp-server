@@ -3,6 +3,9 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+    paths:
+      - 'README.md'
+      - '.github/workflows/pages.yml'
 
 permissions:
   contents: read
