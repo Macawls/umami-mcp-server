@@ -2,7 +2,7 @@
 
 # Umami MCP Server
 
-Connect your Umami Analytics to any MCP client - Claude Desktop, VS Code, Cursor, Zed, and more.
+Connect your Umami Analytics to any MCP client - Claude Desktop, VS Code, Cursor, Windsurf, Zed, and more.
 
 <img src=".github/workflows/insights.PNG" height="400">
 
@@ -113,6 +113,36 @@ Add to your Zed settings:
   }
 }
 ```
+
+</details>
+
+<details>
+<summary><strong>Windsurf</strong></summary>
+
+1. Open Windsurf and click on "Windsurf - Settings" at the bottom right or use the profile dropdown
+2. Navigate to "MCP Settings" in the settings panel
+3. Click "Add MCP Server" and configure:
+
+```json
+{
+  "umami": {
+    "command": "path/to/umami-mcp",
+    "env": {
+      "UMAMI_URL": "https://your-umami-instance.com",
+      "UMAMI_USERNAME": "your-username", 
+      "UMAMI_PASSWORD": "your-password"
+    }
+  }
+}
+```
+
+Or manually edit the config file:
+
+**Windows:** `%APPDATA%\windsurf\mcp_settings.json`  
+**macOS:** `~/Library/Application Support/windsurf/mcp_settings.json`  
+**Linux:** `~/.config/windsurf/mcp_settings.json`
+
+Restart Windsurf or reload MCP servers from the settings panel.
 
 </details>
 
