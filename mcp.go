@@ -9,6 +9,7 @@ import (
 	"os"
 )
 
+//go:embed mcp-tools-schema.json
 var toolsFS embed.FS
 
 type MCPServer struct {
