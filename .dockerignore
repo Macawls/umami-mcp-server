@@ -1,0 +1,32 @@
+# Git files
+.git
+.gitignore
+.github
+
+# IDE files
+.idea
+.vscode
+
+# Build artifacts
+umami-mcp
+umami-mcp.exe
+dist/
+
+# Test files
+*_test.go
+
+# Documentation
+*.md
+CNAME
+llms.md
+
+# Configuration files (should be provided at runtime)
+config.yaml
+config.example.yaml
+
+# GoReleaser
+.goreleaser.yaml
+
+# OS files
+.DS_Store
+Thumbs.db
