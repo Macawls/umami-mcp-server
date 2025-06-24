@@ -121,21 +121,21 @@ func (s *MCPServer) handleToolsList(req Request) {
 		},
 		{
 			"name":        "get_stats",
-			"description": "Get statistics for a website",
+			"description": "Get statistics for a website. Returns pageviews, visitors, bounces, and total time. If all values are 0, verify your date range includes when data exists.",
 			"inputSchema": map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
 					"website_id": map[string]interface{}{
 						"type":        "string",
-						"description": "The website ID",
+						"description": "The website ID from get_websites",
 					},
 					"start_date": map[string]interface{}{
 						"type":        "string",
-						"description": "Start date timestamp in milliseconds",
+						"description": "Start date timestamp in milliseconds (13 digits, e.g. 1719259200000)",
 					},
 					"end_date": map[string]interface{}{
 						"type":        "string",
-						"description": "End date timestamp in milliseconds",
+						"description": "End date timestamp in milliseconds (13 digits, e.g. 1719345600000)",
 					},
 				},
 				"required": []string{"website_id", "start_date", "end_date"},
@@ -143,25 +143,25 @@ func (s *MCPServer) handleToolsList(req Request) {
 		},
 		{
 			"name":        "get_pageviews",
-			"description": "Get page view data for a website",
+			"description": "Get page view data for a website over time",
 			"inputSchema": map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
 					"website_id": map[string]interface{}{
 						"type":        "string",
-						"description": "The website ID",
+						"description": "The website ID from get_websites",
 					},
 					"start_date": map[string]interface{}{
 						"type":        "string",
-						"description": "Start date timestamp in milliseconds",
+						"description": "Start date timestamp in milliseconds (13 digits)",
 					},
 					"end_date": map[string]interface{}{
 						"type":        "string",
-						"description": "End date timestamp in milliseconds",
+						"description": "End date timestamp in milliseconds (13 digits)",
 					},
 					"unit": map[string]interface{}{
 						"type":        "string",
-						"description": "Time unit (hour, day, month, year)",
+						"description": "Time unit for grouping data",
 						"enum":        []string{"hour", "day", "month", "year"},
 						"default":     "day",
 					},
@@ -171,30 +171,30 @@ func (s *MCPServer) handleToolsList(req Request) {
 		},
 		{
 			"name":        "get_metrics",
-			"description": "Get metrics for a website (browsers, OS, devices, etc)",
+			"description": "Get metrics for a website (browsers, OS, devices, pages, countries, etc)",
 			"inputSchema": map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
 					"website_id": map[string]interface{}{
 						"type":        "string",
-						"description": "The website ID",
+						"description": "The website ID from get_websites",
 					},
 					"start_date": map[string]interface{}{
 						"type":        "string",
-						"description": "Start date timestamp in milliseconds",
+						"description": "Start date timestamp in milliseconds (13 digits)",
 					},
 					"end_date": map[string]interface{}{
 						"type":        "string",
-						"description": "End date timestamp in milliseconds",
+						"description": "End date timestamp in milliseconds (13 digits)",
 					},
 					"metric_type": map[string]interface{}{
 						"type":        "string",
-						"description": "Type of metric",
+						"description": "Type of metric to retrieve",
 						"enum":        []string{"url", "referrer", "browser", "os", "device", "country", "event"},
 					},
 					"limit": map[string]interface{}{
 						"type":        "integer",
-						"description": "Maximum results to return",
+						"description": "Maximum number of results (default: 10)",
 						"default":     10,
 					},
 				},
@@ -209,7 +209,7 @@ func (s *MCPServer) handleToolsList(req Request) {
 				"properties": map[string]interface{}{
 					"website_id": map[string]interface{}{
 						"type":        "string",
-						"description": "The website ID",
+						"description": "The website ID from get_websites",
 					},
 				},
 				"required": []string{"website_id"},
