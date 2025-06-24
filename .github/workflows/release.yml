@@ -32,12 +32,16 @@ jobs:
           fetch-depth: 0
       
       - name: Prepare release
+        id: prep
         run: |
           git fetch --tags
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             LATEST_TAG=$(git describe --tags --abbrev=0)
             echo "Running release for tag: $LATEST_TAG"
             git checkout $LATEST_TAG
+            echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
           fi
       
       - uses: actions/setup-go@v5
@@ -65,9 +69,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=ref,event=tag
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ steps.prep.outputs.tag }}
+            type=raw,value=latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
