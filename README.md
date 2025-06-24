@@ -1,8 +1,10 @@
-[![Test](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml) [![Release](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml) [![Deploy to GitHub Pages](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml) 
+[![Test](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml) [![Release](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml) [![Deploy to GitHub Pages](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml)
 
 # Umami MCP Server
 
 Connect your Umami Analytics to any MCP client - Claude Desktop, VS Code, Cursor, Zed, and more.
+
+![](.github/workflows/insights.PNG)
 
 ## Quick Start
 
@@ -37,6 +39,7 @@ Add to your Claude Desktop config:
 ```
 
 Restart Claude Desktop to load the server.
+
 </details>
 
 <details>
@@ -51,7 +54,7 @@ Add to your VS Code settings (`Ctrl/Cmd + ,` → Extensions → Cline):
       "command": "path/to/umami-mcp",
       "env": {
         "UMAMI_URL": "https://your-umami-instance.com",
-        "UMAMI_USERNAME": "your-username", 
+        "UMAMI_USERNAME": "your-username",
         "UMAMI_PASSWORD": "your-password"
       }
     }
@@ -60,6 +63,7 @@ Add to your VS Code settings (`Ctrl/Cmd + ,` → Extensions → Cline):
 ```
 
 Or add to `.vscode/settings.json` in your workspace.
+
 </details>
 
 <details>
@@ -84,6 +88,7 @@ Or add to `.vscode/settings.json` in your workspace.
 ```
 
 The Agent will automatically use the Umami tools when relevant. You can also enable auto-run to skip approval prompts.
+
 </details>
 
 <details>
@@ -108,6 +113,7 @@ Add to your Zed settings:
   }
 }
 ```
+
 </details>
 
 <details>
@@ -122,25 +128,30 @@ For any MCP-compatible client, you'll need:
   - `UMAMI_PASSWORD`: Your password
 
 Check your client's documentation for specific configuration format.
+
 </details>
 
 ## Example Prompts
 
 ### Analytics & Traffic
+
 - "Give me a comprehensive analytics report for my website over the last 30 days"
 - "Which pages are getting the most traffic this month? Show me the top 10"
 - "Analyze my website's traffic patterns - when do I get the most visitors?"
 
 ### User Insights
+
 - "Where are my visitors coming from? Break it down by country and city"
 - "What devices and browsers are my users using?"
 - "Show me the user journey - what pages do visitors typically view in sequence?"
 
 ### Real-time Monitoring
+
 - "How many people are on my website right now? What pages are they viewing?"
 - "Is my website experiencing any issues? Check if traffic has dropped significantly"
 
 ### Content & Campaign Analysis
+
 - "Which blog posts should I update? Show me articles with declining traffic"
 - "How did my recent email campaign perform? Track visitors from the campaign UTM"
 - "Compare traffic from different social media platforms"
@@ -168,15 +179,18 @@ go build -o umami-mcp
 ## Troubleshooting
 
 ### Binary won't run
+
 - **macOS**: Run `xattr -c umami-mcp` to remove quarantine
 - **Linux**: Run `chmod +x umami-mcp` to make executable
 
 ### Connection errors
+
 - Verify your Umami instance is accessible
 - Check your credentials are correct
 - Ensure the URL has no trailing slash
 
 ### Tools not showing up
+
 - Check your MCP client logs for errors
 - Verify the binary path is absolute
 - Try running the binary directly to check for errors
