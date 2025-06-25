@@ -11,7 +11,21 @@ permissions:
   packages: write
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
   test:
+    needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +65,8 @@ jobs:
       - uses: goreleaser/goreleaser-action@v6
         if: github.event_name == 'push'
         with:
-          version: latest
+          distribution: goreleaser
+          version: "~> v2"
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
