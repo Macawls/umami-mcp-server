@@ -1,18 +1,5 @@
-version: "2"
-
 run:
   timeout: 3m
-
-formatters:
-  enable:
-    - gofmt
-  
-  settings:
-    gofmt:
-      simplify: true
-      rewrite-rules:
-        - pattern: 'interface{}'
-          replacement: 'any'
 
 linters:
   enable:
@@ -40,78 +27,78 @@ linters:
     - unused
     - whitespace
 
-  settings:
-    dupl:
-      threshold: 100
-    
-    exhaustive:
-      default-signifies-exhaustive: true
-    
-    gocognit:
-      min-complexity: 20
-    
-    goconst:
-      min-len: 2
-      min-occurrences: 3
-    
-    gocritic:
-      enabled-tags:
-        - diagnostic
-        - experimental
-        - opinionated
-        - performance
-        - style
-    
-    gocyclo:
-      min-complexity: 15
-    
-    gosec:
-      excludes:
-        - G104
-    
-    lll:
-      line-length: 120
-    
-    misspell:
-      locale: US
-    
-    nakedret:
-      max-func-lines: 30
-    
-    nolintlint:
-      allow-unused: false
-      require-explanation: true
-      require-specific: true
-    
-    revive:
-      severity: warning
-      rules:
-        - name: blank-imports
-        - name: context-as-argument
-        - name: context-keys-type
-        - name: dot-imports
-        - name: error-return
-        - name: error-strings
-        - name: error-naming
-        - name: if-return
-        - name: increment-decrement
-        - name: var-naming
-        - name: var-declaration
-        - name: range
-        - name: receiver-naming
-        - name: time-naming
-        - name: unexported-return
-        - name: indent-error-flow
-        - name: errorf
-
-  exclusions:
+linters-settings:
+  dupl:
+    threshold: 100
+  
+  exhaustive:
+    default-signifies-exhaustive: true
+  
+  gocognit:
+    min-complexity: 20
+  
+  goconst:
+    min-len: 2
+    min-occurrences: 3
+  
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+  
+  gocyclo:
+    min-complexity: 15
+  
+  gosec:
+    excludes:
+      - G104
+  
+  lll:
+    line-length: 120
+  
+  misspell:
+    locale: US
+  
+  nakedret:
+    max-func-lines: 30
+  
+  nolintlint:
+    allow-unused: false
+    require-explanation: true
+    require-specific: true
+  
+  revive:
+    severity: warning
     rules:
-      - path: _test\.go
-        linters:
-          - dupl
-          - gosec
-          - goconst
-      
-      - linters:
-          - lll
-        source: "^//go:generate "
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - dupl
+        - gosec
+        - goconst
+    
+    - linters:
+        - lll
+      source: "^//go:generate "
