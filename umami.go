@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -18,6 +19,8 @@ type UmamiClient struct {
 }
 
 func NewUmamiClient(baseURL, username, password string) *UmamiClient {
+	baseURL = strings.TrimSuffix(baseURL, "/")
+
 	return &UmamiClient{
 		baseURL:    baseURL,
 		username:   username,
@@ -114,11 +117,12 @@ func (c *UmamiClient) GetWebsites() ([]Website, error) {
 
 	return result.Data, nil
 }
+
 type Stats struct {
-	PageViews  ValueChange `json:"pageviews"`
-	Visitors   ValueChange `json:"visitors"`
-	Bounces    ValueChange `json:"bounces"`
-	TotalTime  ValueChange `json:"totaltime"`
+	PageViews ValueChange `json:"pageviews"`
+	Visitors  ValueChange `json:"visitors"`
+	Bounces   ValueChange `json:"bounces"`
+	TotalTime ValueChange `json:"totaltime"`
 }
 
 type ValueChange struct {
@@ -144,6 +148,7 @@ func (c *UmamiClient) GetStats(websiteID, startDate, endDate string) (*Stats, er
 
 	return &stats, nil
 }
+
 type PageView struct {
 	T string `json:"t"`
 	Y int    `json:"y"`
