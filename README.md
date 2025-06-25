@@ -1,10 +1,24 @@
-<div style="display: flex; gap: 8px; flex-wrap: wrap;">
+<div style="display: flex; flex-wrap: wrap; gap: 2px">
 
-[![Go project version](https://badge.fury.io/go/github.com%2Fmacawls%2Fumami-mcp-server.svg)](https://badge.fury.io/go/github.com%2Fmacawls%2Fumami-mcp-server)
-[![Go Reference](https://pkg.go.dev/badge/github.com/Macawls/umami-mcp-server.svg)](https://pkg.go.dev/github.com/Macawls/umami-mcp-server)
-[![Test](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml)
-[![Release](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml)
-[![Deploy to GitHub Pages](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml)
+  <a href="https://badge.fury.io/go/github.com%2FMacawls%2Fumami-mcp-server">
+    <img src="https://badge.fury.io/go/github.com%2Fmacawls%2Fumami-mcp-server.svg" alt="Go project version" />
+  </a>
+
+  <a href="https://pkg.go.dev/github.com/Macawls/umami-mcp-server">
+    <img src="https://pkg.go.dev/badge/github.com/Macawls/umami-mcp-server.svg" alt="Go Reference" />
+  </a>
+
+  <a href="https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml">
+    <img src="https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml/badge.svg" alt="Test" />
+  </a>
+
+  <a href="https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml">
+    <img src="https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml/badge.svg" alt="Release" />
+  </a>
+
+  <a href="https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml">
+    <img src="https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml/badge.svg" alt="Deploy to GitHub Pages" />
+  </a>
 
 </div>
 
@@ -13,6 +27,31 @@
 Connect your Umami Analytics to any MCP client - Claude Desktop, VS Code, Cursor, Windsurf, Zed, and more.
 
 <img src=".github/workflows/insights.PNG" height="500">
+
+## Prompts
+
+### Analytics & Traffic
+
+- "Give me a comprehensive analytics report for my website over the last 30 days"
+- "Which pages are getting the most traffic this month? Show me the top 10"
+- "Analyze my website's traffic patterns - when do I get the most visitors?"
+
+### User Insights
+
+- "Where are my visitors coming from? Break it down by country and city"
+- "What devices and browsers are my users using?"
+- "Show me the user journey - what pages do visitors typically view in sequence?"
+
+### Real-time Monitoring
+
+- "How many people are on my website right now? What pages are they viewing?"
+- "Is my website experiencing any issues? Check if traffic has dropped significantly"
+
+### Content & Campaign Analysis
+
+- "Which blog posts should I update? Show me articles with declining traffic"
+- "How did my recent email campaign perform? Track visitors from the campaign UTM"
+- "Compare traffic from different social media platforms"
 
 ## Quick Start
 
@@ -215,31 +254,6 @@ Config location: `%APPDATA%\windsurf\mcp_settings.json` (Windows)
 All use similar JSON format as above. Docker and secure prompts work the same way.
 
 </details>
-
-## Example Prompts
-
-### Analytics & Traffic
-
-- "Give me a comprehensive analytics report for my website over the last 30 days"
-- "Which pages are getting the most traffic this month? Show me the top 10"
-- "Analyze my website's traffic patterns - when do I get the most visitors?"
-
-### User Insights
-
-- "Where are my visitors coming from? Break it down by country and city"
-- "What devices and browsers are my users using?"
-- "Show me the user journey - what pages do visitors typically view in sequence?"
-
-### Real-time Monitoring
-
-- "How many people are on my website right now? What pages are they viewing?"
-- "Is my website experiencing any issues? Check if traffic has dropped significantly"
-
-### Content & Campaign Analysis
-
-- "Which blog posts should I update? Show me articles with declining traffic"
-- "How did my recent email campaign perform? Track visitors from the campaign UTM"
-- "Compare traffic from different social media platforms"
 
 ## Available Tools
 
