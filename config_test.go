@@ -20,7 +20,7 @@ func TestLoadConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "missing_url",
+			name: "missing_url",
 			envVars: map[string]string{
 				"UMAMI_USERNAME": "user",
 				"UMAMI_PASSWORD": "pass",

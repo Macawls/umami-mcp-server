@@ -36,8 +36,8 @@ func (s *MCPServer) Run() error {
 		}
 
 		var msgType struct {
-			ID     interface{} `json:"id"`
-			Method string      `json:"method"`
+			ID     any    `json:"id"`
+			Method string `json:"method"`
 		}
 		if err := json.Unmarshal(rawMsg, &msgType); err != nil {
 			s.sendError(nil, -32700, "Parse error")
@@ -59,16 +59,16 @@ func (s *MCPServer) Run() error {
 			case "tools/call":
 				s.handleToolCall(req)
 			case "resources/list":
-				s.sendResult(req.ID, map[string]interface{}{"resources": []interface{}{}})
+				s.sendResult(req.ID, map[string]any{"resources": []any{}})
 			case "prompts/list":
-				s.sendResult(req.ID, map[string]interface{}{"prompts": []interface{}{}})
+				s.sendResult(req.ID, map[string]any{"prompts": []any{}})
 			default:
 				s.sendError(req.ID, -32601, "Method not found")
 			}
 		} else {
 			switch msgType.Method {
 			case "notifications/initialized":
-			case "notifications/cancelled":
+			case "notifications/canceled":
 			default:
 			}
 		}
@@ -78,10 +78,10 @@ func (s *MCPServer) Run() error {
 
 func (s *MCPServer) send(resp Response) {
 	data, _ := json.Marshal(resp)
-	fmt.Fprintf(s.stdout, "%s\n", data)
+	_, _ = fmt.Fprintf(s.stdout, "%s\n", data)
 }
 
-func (s *MCPServer) sendError(id interface{}, code int, message string) {
+func (s *MCPServer) sendError(id any, code int, message string) {
 	s.send(Response{
 		JSONRPC: "2.0",
 		ID:      id,
@@ -92,7 +92,7 @@ func (s *MCPServer) sendError(id interface{}, code int, message string) {
 	})
 }
 
-func (s *MCPServer) sendResult(id interface{}, result interface{}) {
+func (s *MCPServer) sendResult(id, result any) {
 	s.send(Response{
 		JSONRPC: "2.0",
 		ID:      id,
@@ -100,14 +100,14 @@ func (s *MCPServer) sendResult(id interface{}, result interface{}) {
 	})
 }
 func (s *MCPServer) handleInitialize(req Request) {
-	result := map[string]interface{}{
+	result := map[string]any{
 		"protocolVersion": "2024-11-05",
 		"serverInfo": map[string]string{
 			"name":    "umami-mcp",
 			"version": version,
 		},
-		"capabilities": map[string]interface{}{
-			"tools": map[string]interface{}{},
+		"capabilities": map[string]any{
+			"tools": map[string]any{},
 		},
 	}
 	s.sendResult(req.ID, result)
@@ -120,13 +120,13 @@ func (s *MCPServer) handleToolsList(req Request) {
 		return
 	}
 
-	var tools []map[string]interface{}
+	var tools []map[string]any
 	if err := json.Unmarshal(toolsData, &tools); err != nil {
 		s.sendError(req.ID, -32603, fmt.Sprintf("Failed to parse tools: %v", err))
 		return
 	}
 
-	s.sendResult(req.ID, map[string]interface{}{"tools": tools})
+	s.sendResult(req.ID, map[string]any{"tools": tools})
 }
 func (s *MCPServer) handleToolCall(req Request) {
 	var params struct {

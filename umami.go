@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -36,15 +37,21 @@ func (c *UmamiClient) Authenticate() error {
 	}
 
 	data, _ := json.Marshal(payload)
-	resp, err := c.httpClient.Post(
-		c.baseURL+"/api/auth/login",
-		"application/json",
-		bytes.NewReader(data),
-	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/api/auth/login", bytes.NewReader(data))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("authentication request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("authentication failed with status %d", resp.StatusCode)
@@ -60,8 +67,11 @@ func (c *UmamiClient) Authenticate() error {
 	c.token = result.Token
 	return nil
 }
-func (c *UmamiClient) doRequest(method, path string, params map[string]string) ([]byte, error) {
-	req, err := http.NewRequest(method, c.baseURL+path, nil)
+func (c *UmamiClient) doRequest(path string, params map[string]string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+path, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +91,7 @@ func (c *UmamiClient) doRequest(method, path string, params map[string]string) (
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -103,7 +113,7 @@ type Website struct {
 }
 
 func (c *UmamiClient) GetWebsites() ([]Website, error) {
-	data, err := c.doRequest("GET", "/api/websites", nil)
+	data, err := c.doRequest("/api/websites", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +146,7 @@ func (c *UmamiClient) GetStats(websiteID, startDate, endDate string) (*Stats, er
 		"endAt":   endDate,
 	}
 
-	data, err := c.doRequest("GET", fmt.Sprintf("/api/websites/%s/stats", websiteID), params)
+	data, err := c.doRequest(fmt.Sprintf("/api/websites/%s/stats", websiteID), params)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +171,7 @@ func (c *UmamiClient) GetPageViews(websiteID, startDate, endDate, unit string) (
 		"unit":    unit,
 	}
 
-	data, err := c.doRequest("GET", fmt.Sprintf("/api/websites/%s/pageviews", websiteID), params)
+	data, err := c.doRequest(fmt.Sprintf("/api/websites/%s/pageviews", websiteID), params)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +204,7 @@ func (c *UmamiClient) GetMetrics(websiteID, startDate, endDate, metricType strin
 		"limit":   fmt.Sprintf("%d", limit),
 	}
 
-	data, err := c.doRequest("GET", fmt.Sprintf("/api/websites/%s/metrics", websiteID), params)
+	data, err := c.doRequest(fmt.Sprintf("/api/websites/%s/metrics", websiteID), params)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +218,7 @@ func (c *UmamiClient) GetMetrics(websiteID, startDate, endDate, metricType strin
 }
 
 func (c *UmamiClient) GetActive(websiteID string) ([]Metric, error) {
-	data, err := c.doRequest("GET", fmt.Sprintf("/api/websites/%s/active", websiteID), nil)
+	data, err := c.doRequest(fmt.Sprintf("/api/websites/%s/active", websiteID), nil)
 	if err != nil {
 		return nil, err
 	}

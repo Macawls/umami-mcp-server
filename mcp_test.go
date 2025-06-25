@@ -10,7 +10,7 @@ import (
 func TestMCPServer_HandleInitialize(t *testing.T) {
 	var output bytes.Buffer
 	server := &MCPServer{client: &UmamiClient{}, stdout: &output}
-	
+
 	server.handleInitialize(Request{JSONRPC: "2.0", ID: 1, Method: "initialize"})
 
 	var resp Response
@@ -22,7 +22,7 @@ func TestMCPServer_HandleInitialize(t *testing.T) {
 		t.Errorf("Expected no error, got: %v", resp.Error)
 	}
 
-	result, ok := resp.Result.(map[string]interface{})
+	result, ok := resp.Result.(map[string]any)
 	if !ok {
 		t.Fatal("Result is not a map")
 	}
@@ -34,55 +34,55 @@ func TestMCPServer_HandleInitialize(t *testing.T) {
 func TestMCPServer_HandleToolsList(t *testing.T) {
 	var output bytes.Buffer
 	server := &MCPServer{client: &UmamiClient{}, stdout: &output}
-	
+
 	server.handleToolsList(Request{JSONRPC: "2.0", ID: 2, Method: "tools/list"})
 
 	var resp Response
 	if err := json.Unmarshal(output.Bytes(), &resp); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
-	
+
 	if resp.Error != nil {
 		t.Fatalf("Unexpected error: %v", resp.Error)
 	}
 
-	result, ok := resp.Result.(map[string]interface{})
+	result, ok := resp.Result.(map[string]any)
 	if !ok {
 		t.Fatal("Result is not a map")
 	}
-	toolsInterface, ok := result["tools"].([]interface{})
+	toolsInterface, ok := result["tools"].([]any)
 	if !ok {
 		t.Fatal("Tools is not an array")
 	}
-	
+
 	if len(toolsInterface) != 5 {
 		t.Fatalf("Expected 5 tools, got %d", len(toolsInterface))
 	}
 
 	expectedTools := []string{"get_websites", "get_stats", "get_pageviews", "get_metrics", "get_active"}
 	for i, toolInterface := range toolsInterface {
-		tool, ok := toolInterface.(map[string]interface{})
+		tool, ok := toolInterface.(map[string]any)
 		if !ok {
 			t.Errorf("Tool %d is not a map", i)
 			continue
 		}
-		
+
 		name, ok := tool["name"].(string)
 		if !ok {
 			t.Errorf("Tool %d name is not a string", i)
 			continue
 		}
-		
+
 		if name != expectedTools[i] {
 			t.Errorf("Tool %d: expected %s, got %s", i, expectedTools[i], name)
 		}
-		
+
 		desc, hasDesc := tool["description"].(string)
 		_, hasSchema := tool["inputSchema"]
 		if !hasDesc || desc == "" || !hasSchema {
 			t.Errorf("Tool %s missing required fields", name)
 		}
-		
+
 		if name == "get_websites" && !strings.Contains(desc, "CRITICAL") {
 			t.Error("get_websites must emphasize CRITICAL importance")
 		}
@@ -100,7 +100,7 @@ func TestMCPServer_UnknownMethod(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &resp); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
-	
+
 	if resp.Error == nil || resp.Error.Code != -32601 {
 		t.Error("Expected error -32601 for unknown method")
 	}
@@ -112,7 +112,7 @@ func TestMCPServer_ToolsJSONValidity(t *testing.T) {
 		t.Fatalf("Failed to read tools JSON: %v", err)
 	}
 
-	var tools []map[string]interface{}
+	var tools []map[string]any
 	if err := json.Unmarshal(toolsData, &tools); err != nil {
 		t.Fatalf("Failed to parse tools JSON: %v", err)
 	}

@@ -23,7 +23,7 @@ func LoadConfig() (*Config, error) {
 		configPath = filepath.Join(filepath.Dir(exePath), "config.yaml")
 	}
 
-	if data, err := os.ReadFile(configPath); err == nil {
+	if data, err := os.ReadFile(configPath); err == nil { //nolint:gosec // config file path is controlled
 		if err := yaml.Unmarshal(data, config); err != nil {
 			return nil, fmt.Errorf("invalid config file: %w", err)
 		}

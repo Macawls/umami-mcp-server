@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func (s *MCPServer) handleGetWebsites(id interface{}) {
+func (s *MCPServer) handleGetWebsites(id any) {
 	websites, err := s.client.GetWebsites()
 	if err != nil {
 		s.sendError(id, -32603, fmt.Sprintf("Failed to get websites: %v", err))
@@ -18,10 +18,10 @@ func (s *MCPServer) handleGetWebsites(id interface{}) {
 		"text": string(data),
 	}}
 
-	s.sendResult(id, map[string]interface{}{"content": content})
+	s.sendResult(id, map[string]any{"content": content})
 }
 
-func (s *MCPServer) handleGetStats(id interface{}, args json.RawMessage) {
+func (s *MCPServer) handleGetStats(id any, args json.RawMessage) {
 	var params struct {
 		WebsiteID string `json:"website_id"`
 		StartDate string `json:"start_date"`
@@ -45,9 +45,9 @@ func (s *MCPServer) handleGetStats(id interface{}, args json.RawMessage) {
 		"text": string(data),
 	}}
 
-	s.sendResult(id, map[string]interface{}{"content": content})
+	s.sendResult(id, map[string]any{"content": content})
 }
-func (s *MCPServer) handleGetPageViews(id interface{}, args json.RawMessage) {
+func (s *MCPServer) handleGetPageViews(id any, args json.RawMessage) {
 	var params struct {
 		WebsiteID string `json:"website_id"`
 		StartDate string `json:"start_date"`
@@ -76,9 +76,9 @@ func (s *MCPServer) handleGetPageViews(id interface{}, args json.RawMessage) {
 		"text": string(data),
 	}}
 
-	s.sendResult(id, map[string]interface{}{"content": content})
+	s.sendResult(id, map[string]any{"content": content})
 }
-func (s *MCPServer) handleGetMetrics(id interface{}, args json.RawMessage) {
+func (s *MCPServer) handleGetMetrics(id any, args json.RawMessage) {
 	var params struct {
 		WebsiteID  string `json:"website_id"`
 		StartDate  string `json:"start_date"`
@@ -96,7 +96,9 @@ func (s *MCPServer) handleGetMetrics(id interface{}, args json.RawMessage) {
 		params.Limit = 10
 	}
 
-	metrics, err := s.client.GetMetrics(params.WebsiteID, params.StartDate, params.EndDate, params.MetricType, params.Limit)
+	metrics, err := s.client.GetMetrics(
+		params.WebsiteID, params.StartDate, params.EndDate, params.MetricType, params.Limit,
+	)
 	if err != nil {
 		s.sendError(id, -32603, fmt.Sprintf("Failed to get metrics: %v", err))
 		return
@@ -108,10 +110,10 @@ func (s *MCPServer) handleGetMetrics(id interface{}, args json.RawMessage) {
 		"text": string(data),
 	}}
 
-	s.sendResult(id, map[string]interface{}{"content": content})
+	s.sendResult(id, map[string]any{"content": content})
 }
 
-func (s *MCPServer) handleGetActive(id interface{}, args json.RawMessage) {
+func (s *MCPServer) handleGetActive(id any, args json.RawMessage) {
 	var params struct {
 		WebsiteID string `json:"website_id"`
 	}
@@ -133,5 +135,5 @@ func (s *MCPServer) handleGetActive(id interface{}, args json.RawMessage) {
 		"text": string(data),
 	}}
 
-	s.sendResult(id, map[string]interface{}{"content": content})
+	s.sendResult(id, map[string]any{"content": content})
 }
