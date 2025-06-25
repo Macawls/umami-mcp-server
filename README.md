@@ -1,4 +1,12 @@
-[![Test](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml) [![Release](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml)
+<div style="display: flex; gap: 8px; flex-wrap: wrap;">
+
+[![Go project version](https://badge.fury.io/go/github.com%2Fmacawls%2Fumami-mcp-server.svg)](https://badge.fury.io/go/github.com%2Fmacawls%2Fumami-mcp-server)
+[![Go Reference](https://pkg.go.dev/badge/github.com/Macawls/umami-mcp-server.svg)](https://pkg.go.dev/github.com/Macawls/umami-mcp-server)
+[![Test](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml)
+[![Release](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml)
+[![Deploy to GitHub Pages](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml)
+
+</div>
 
 # Umami MCP Server
 
