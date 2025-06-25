@@ -1,21 +1,40 @@
-[![Test](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml) [![Release](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml) [![Deploy to GitHub Pages](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml)
+[![Test](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/test.yml) [![Release](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml/badge.svg)](https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml)
 
 # Umami MCP Server
 
 Connect your Umami Analytics to any MCP client - Claude Desktop, VS Code, Cursor, Windsurf, Zed, and more.
 
-<img src=".github/workflows/insights.PNG" height="400">
+<img src=".github/workflows/insights.PNG" height="500">
 
 ## Quick Start
 
-### 1. Download
+### Option 1: Download Binary
 
-Get the latest release for your platform from [Releases](https://github.com/Macawls/umami-mcp-server/releases).
+Get the latest release for your platform from [Releases](https://github.com/Macawls/umami-mcp-server/releases)
 
-### 2. Configure Your MCP Client
+### Option 2: Docker
 
-<details>
-<summary><strong>Claude Desktop</strong></summary>
+```bash
+docker run -i --rm \
+  -e UMAMI_URL="https://your-instance.com" \
+  -e UMAMI_USERNAME="username" \
+  -e UMAMI_PASSWORD="password" \
+  ghcr.io/macawls/umami-mcp-server
+```
+
+### Option 3: Go Install
+
+```bash
+go install github.com/Macawls/umami-mcp-server@latest
+# Or specific version
+go install github.com/Macawls/umami-mcp-server@v1.0.3
+```
+
+Installs to `~/go/bin/umami-mcp-server` (or `$GOPATH/bin`)
+
+## Configure Your MCP Client
+
+### Claude Desktop
 
 Add to your Claude Desktop config:
 
@@ -27,7 +46,7 @@ Add to your Claude Desktop config:
 {
   "mcpServers": {
     "umami": {
-      "command": "path/to/umami-mcp",
+      "command": "~/go/bin/umami-mcp-server",
       "env": {
         "UMAMI_URL": "https://your-umami-instance.com",
         "UMAMI_USERNAME": "your-username",
@@ -37,21 +56,90 @@ Add to your Claude Desktop config:
   }
 }
 ```
+
+<details>
+<summary>Docker version</summary>
+
+```json
+{
+  "mcpServers": {
+    "umami": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "UMAMI_URL",
+        "-e",
+        "UMAMI_USERNAME",
+        "-e",
+        "UMAMI_PASSWORD",
+        "ghcr.io/macawls/umami-mcp-server"
+      ],
+      "env": {
+        "UMAMI_URL": "https://your-umami-instance.com",
+        "UMAMI_USERNAME": "your-username",
+        "UMAMI_PASSWORD": "your-password"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>Secure prompts</summary>
+
+```json
+{
+  "mcpServers": {
+    "umami": {
+      "command": "~/go/bin/umami-mcp-server",
+      "env": {
+        "UMAMI_URL": "${input:umami_url}",
+        "UMAMI_USERNAME": "${input:umami_username}",
+        "UMAMI_PASSWORD": "${input:umami_password}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "umami_url",
+      "description": "Umami instance URL"
+    },
+    {
+      "type": "promptString",
+      "id": "umami_username",
+      "description": "Umami username"
+    },
+    {
+      "type": "promptString",
+      "id": "umami_password",
+      "description": "Umami password",
+      "password": true
+    }
+  ]
+}
+```
+
+</details>
 
 Restart Claude Desktop to load the server.
 
-</details>
+### VS Code (GitHub Copilot)
 
-<details>
-<summary><strong>VS Code (Cline)</strong></summary>
+Enable agent mode and add MCP servers to access Umami from Copilot.
 
-Add to your VS Code settings (`Ctrl/Cmd + ,` → Extensions → Cline):
+**For workspace:** Create `.vscode/mcp.json`
 
 ```json
 {
-  "cline.mcpServers": {
+  "servers": {
     "umami": {
-      "command": "path/to/umami-mcp",
+      "command": "~/go/bin/umami-mcp-server",
       "env": {
         "UMAMI_URL": "https://your-umami-instance.com",
         "UMAMI_USERNAME": "your-username",
@@ -62,52 +150,36 @@ Add to your VS Code settings (`Ctrl/Cmd + ,` → Extensions → Cline):
 }
 ```
 
-Or add to `.vscode/settings.json` in your workspace.
-
-</details>
-
 <details>
-<summary><strong>Cursor</strong></summary>
-
-1. In Cursor, press `Ctrl/Cmd + Shift + P` to open command palette
-2. Search for "Cursor Settings" and select "Cursor Settings: Open User Settings"
-3. Navigate to the MCP section
-4. Add the Umami server configuration:
+<summary>With secure prompts</summary>
 
 ```json
 {
-  "umami": {
-    "command": "path/to/umami-mcp",
-    "env": {
-      "UMAMI_URL": "https://your-umami-instance.com",
-      "UMAMI_USERNAME": "your-username",
-      "UMAMI_PASSWORD": "your-password"
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "umami_url",
+      "description": "Umami instance URL"
+    },
+    {
+      "type": "promptString",
+      "id": "umami_username",
+      "description": "Umami username"
+    },
+    {
+      "type": "promptString",
+      "id": "umami_password",
+      "description": "Umami password",
+      "password": true
     }
-  }
-}
-```
-
-The Agent will automatically use the Umami tools when relevant. You can also enable auto-run to skip approval prompts.
-
-</details>
-
-<details>
-<summary><strong>Zed</strong></summary>
-
-Add to your Zed settings:
-
-```json
-{
-  "assistant": {
-    "version": "2",
-    "mcp_servers": {
-      "umami": {
-        "command": "path/to/umami-mcp",
-        "env": {
-          "UMAMI_URL": "https://your-umami-instance.com",
-          "UMAMI_USERNAME": "your-username",
-          "UMAMI_PASSWORD": "your-password"
-        }
+  ],
+  "servers": {
+    "umami": {
+      "command": "~/go/bin/umami-mcp-server",
+      "env": {
+        "UMAMI_URL": "${input:umami_url}",
+        "UMAMI_USERNAME": "${input:umami_username}",
+        "UMAMI_PASSWORD": "${input:umami_password}"
       }
     }
   }
@@ -116,48 +188,23 @@ Add to your Zed settings:
 
 </details>
 
-<details>
-<summary><strong>Windsurf</strong></summary>
+Access via: Chat view → Agent mode → Tools button
 
-1. Open Windsurf and click on "Windsurf - Settings" at the bottom right or use the profile dropdown
-2. Navigate to "MCP Settings" in the settings panel
-3. Click "Add MCP Server" and configure:
-
-```json
-{
-  "umami": {
-    "command": "path/to/umami-mcp",
-    "env": {
-      "UMAMI_URL": "https://your-umami-instance.com",
-      "UMAMI_USERNAME": "your-username", 
-      "UMAMI_PASSWORD": "your-password"
-    }
-  }
-}
-```
-
-Or manually edit the config file:
-
-**Windows:** `%APPDATA%\windsurf\mcp_settings.json`  
-**macOS:** `~/Library/Application Support/windsurf/mcp_settings.json`  
-**Linux:** `~/.config/windsurf/mcp_settings.json`
-
-Restart Windsurf or reload MCP servers from the settings panel.
-
-</details>
+### Other MCP Clients
 
 <details>
-<summary><strong>Other MCP Clients</strong></summary>
+<summary>Cursor, Windsurf, Zed, Cline</summary>
 
-For any MCP-compatible client, you'll need:
+**Cursor:** `Ctrl/Cmd + Shift + P` → "Cursor Settings" → MCP section
 
-- **Command**: Path to the umami-mcp binary
-- **Environment Variables**:
-  - `UMAMI_URL`: Your Umami instance URL
-  - `UMAMI_USERNAME`: Your username
-  - `UMAMI_PASSWORD`: Your password
+**Windsurf:** Settings → MCP Settings → Add MCP Server  
+Config location: `%APPDATA%\windsurf\mcp_settings.json` (Windows)
 
-Check your client's documentation for specific configuration format.
+**Zed:** Settings → `assistant.mcp_servers`
+
+**Cline:** VS Code Settings → Extensions → Cline → MCP Servers
+
+All use similar JSON format as above. Docker and secure prompts work the same way.
 
 </details>
 
@@ -186,6 +233,14 @@ Check your client's documentation for specific configuration format.
 - "How did my recent email campaign perform? Track visitors from the campaign UTM"
 - "Compare traffic from different social media platforms"
 
+## Available Tools
+
+- **get_websites** - List all your websites
+- **get_stats** - Get visitor statistics
+- **get_pageviews** - View page traffic over time
+- **get_metrics** - See browsers, countries, devices, and more
+- **get_active** - Current active visitors
+
 ## Alternative Configuration
 
 Instead of environment variables, create a `config.yaml` file next to the binary:
@@ -196,7 +251,7 @@ username: your-username
 password: your-password
 ```
 
-Environment variables take priority over the config file. This allows you to override config file settings without modifying the file itself.
+Environment variables take priority over the config file.
 
 ## Build from Source
 
@@ -210,28 +265,19 @@ go build -o umami-mcp
 
 ### Binary won't run
 
-- **macOS**: Run `xattr -c umami-mcp` to remove quarantine
-- **Linux**: Run `chmod +x umami-mcp` to make executable
+- **macOS**: Run `xattr -c umami-mcp-server` to remove quarantine
+- **Linux**: Run `chmod +x umami-mcp-server` to make executable
 
 ### Connection errors
 
 - Verify your Umami instance is accessible
 - Check your credentials are correct
-- Ensure the URL has no trailing slash
 
 ### Tools not showing up
 
 - Check your MCP client logs for errors
 - Verify the binary path is absolute
 - Try running the binary directly to check for errors
-
-## Available Tools
-
-- **get_websites** - List all your websites
-- **get_stats** - Get visitor statistics
-- **get_pageviews** - View page traffic over time
-- **get_metrics** - See browsers, countries, devices, and more
-- **get_active** - Current active visitors
 
 ## License
 
