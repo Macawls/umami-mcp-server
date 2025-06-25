@@ -20,6 +20,10 @@
     <img src="https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml/badge.svg" alt="Deploy to GitHub Pages" />
   </a>
 
+  <a href="https://lobehub.com/mcp/macawls-umami-mcp-server">
+    <img src="https://lobehub.com/badge/mcp/macawls-umami-mcp-server?style=plastic" alt="MCP Badge" />
+  </a>
+
 </div>
 
 # Umami MCP Server
