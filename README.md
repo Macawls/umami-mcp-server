@@ -30,7 +30,13 @@
 
 Connect your Umami Analytics to any MCP client - Claude Desktop, VS Code, Cursor, Windsurf, Zed, and more.
 
+<a href="https://glama.ai/mcp/servers/@Macawls/umami-mcp-server">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@Macawls/umami-mcp-server/badge" />
+</a>
+
 <img src=".github/workflows/insights.PNG" height="500">
+
+
 
 ## Prompts
 
