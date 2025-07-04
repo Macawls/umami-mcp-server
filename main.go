@@ -13,6 +13,25 @@ var (
 	date    = "unknown"
 )
 
+type Request struct {
+	JSONRPC string          `json:"jsonrpc"`
+	ID      any             `json:"id"`
+	Method  string          `json:"method"`
+	Params  json.RawMessage `json:"params,omitempty"`
+}
+
+type Response struct {
+	JSONRPC string `json:"jsonrpc"`
+	ID      any    `json:"id"`
+	Result  any    `json:"result,omitempty"`
+	Error   *Error `json:"error,omitempty"`
+}
+
+type Error struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
 func main() {
 	if len(os.Args) > 1 && (os.Args[1] == "-v" || os.Args[1] == "--version") {
 		fmt.Printf("umami-mcp %s (%s) built %s\n", version, commit, date)
@@ -33,23 +52,4 @@ func main() {
 	if err := server.Run(); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
-}
-
-type Request struct {
-	JSONRPC string          `json:"jsonrpc"`
-	ID      any             `json:"id"`
-	Method  string          `json:"method"`
-	Params  json.RawMessage `json:"params,omitempty"`
-}
-
-type Response struct {
-	JSONRPC string `json:"jsonrpc"`
-	ID      any    `json:"id"`
-	Result  any    `json:"result,omitempty"`
-	Error   *Error `json:"error,omitempty"`
-}
-
-type Error struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
 }
