@@ -5,8 +5,20 @@ import (
 	"fmt"
 )
 
-func (s *MCPServer) handleGetWebsites(id any) {
-	websites, err := s.client.GetWebsites()
+func (s *MCPServer) handleGetWebsites(id any, args json.RawMessage) {
+	var params struct {
+		IncludeTeams  bool `json:"includeTeams"`
+		IncludeTeams2 bool `json:"include_teams"`
+	}
+
+	if len(args) > 0 {
+		if err := json.Unmarshal(args, &params); err != nil {
+			s.sendError(id, -32602, "Invalid arguments")
+			return
+		}
+	}
+
+	websites, err := s.client.GetWebsites(params.IncludeTeams || params.IncludeTeams2)
 	if err != nil {
 		s.sendError(id, -32603, fmt.Sprintf("Failed to get websites: %v", err))
 		return
