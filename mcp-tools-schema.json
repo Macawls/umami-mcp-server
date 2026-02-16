@@ -4,7 +4,13 @@
     "description": "Get list of all websites configured in Umami. Returns website ID, name, domain, and createdAt timestamp. CRITICAL: Always call this FIRST before any analytics queries to (1) verify the website exists, (2) check when it was created, and (3) ensure you don't request data from before the creation date. Analytics data only exists from createdAt onwards.",
     "inputSchema": {
       "type": "object",
-      "properties": {}
+      "properties": {
+        "includeTeams": {
+          "type": "boolean",
+          "description": "Include websites from teams the authenticated user belongs to",
+          "default": false
+        }
+      }
     }
   },
   {
@@ -77,8 +83,8 @@
         },
         "metric_type": {
           "type": "string",
-          "description": "Type of metric to retrieve. Each returns different data in 'x' field",
-          "enum": ["url", "referrer", "browser", "os", "device", "country", "event"]
+          "description": "Type of metric to retrieve. 'url' is kept as a backward-compatible alias and may map to 'path' on newer Umami versions.",
+          "enum": ["url", "path", "title", "entry", "exit", "referrer", "browser", "os", "device", "country", "event"]
         },
         "limit": {
           "type": "integer",

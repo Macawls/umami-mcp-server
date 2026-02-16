@@ -112,8 +112,13 @@ type Website struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func (c *UmamiClient) GetWebsites() ([]Website, error) {
-	data, err := c.doRequest("/api/websites", nil)
+func (c *UmamiClient) GetWebsites(includeTeams bool) ([]Website, error) {
+	var params map[string]string
+	if includeTeams {
+		params = map[string]string{"includeTeams": "true"}
+	}
+
+	data, err := c.doRequest("/api/websites", params)
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +143,34 @@ type Stats struct {
 type ValueChange struct {
 	Value  int `json:"value"`
 	Change int `json:"change"`
+}
+
+func (v *ValueChange) UnmarshalJSON(data []byte) error {
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 || string(trimmed) == "null" {
+		return nil
+	}
+
+	if trimmed[0] == '{' {
+		var object struct {
+			Value  float64 `json:"value"`
+			Change float64 `json:"change"`
+		}
+		if err := json.Unmarshal(trimmed, &object); err != nil {
+			return err
+		}
+		v.Value = int(object.Value)
+		v.Change = int(object.Change)
+		return nil
+	}
+
+	var numeric float64
+	if err := json.Unmarshal(trimmed, &numeric); err != nil {
+		return err
+	}
+	v.Value = int(numeric)
+	v.Change = 0
+	return nil
 }
 
 func (c *UmamiClient) GetStats(websiteID, startDate, endDate string) (*Stats, error) {
@@ -205,6 +238,15 @@ func (c *UmamiClient) GetMetrics(websiteID, startDate, endDate, metricType strin
 	}
 
 	data, err := c.doRequest(fmt.Sprintf("/api/websites/%s/metrics", websiteID), params)
+	if err != nil && metricType == "url" {
+		fallbackParams := map[string]string{
+			"startAt": startDate,
+			"endAt":   endDate,
+			"type":    "path",
+			"limit":   fmt.Sprintf("%d", limit),
+		}
+		data, err = c.doRequest(fmt.Sprintf("/api/websites/%s/metrics", websiteID), fallbackParams)
+	}
 	if err != nil {
 		return nil, err
 	}

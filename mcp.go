@@ -141,7 +141,7 @@ func (s *MCPServer) handleToolCall(req Request) {
 
 	switch params.Name {
 	case "get_websites":
-		s.handleGetWebsites(req.ID)
+		s.handleGetWebsites(req.ID, params.Arguments)
 	case "get_stats":
 		s.handleGetStats(req.ID, params.Arguments)
 	case "get_pageviews":

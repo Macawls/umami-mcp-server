@@ -75,7 +75,7 @@ func TestUmamiClient_GetWebsites(t *testing.T) {
 		httpClient: &http.Client{},
 	}
 
-	websites, err := client.GetWebsites()
+	websites, err := client.GetWebsites(false)
 	if err != nil {
 		t.Fatalf("GetWebsites failed: %v", err)
 	}
@@ -86,6 +86,33 @@ func TestUmamiClient_GetWebsites(t *testing.T) {
 
 	if websites[0].ID != "test-id-1" {
 		t.Errorf("Expected first website ID test-id-1, got %s", websites[0].ID)
+	}
+}
+
+func TestUmamiClient_GetWebsites_WithIncludeTeams(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/websites" {
+			t.Errorf("Expected path /api/websites, got %s", r.URL.Path)
+		}
+
+		if r.URL.Query().Get("includeTeams") != "true" {
+			t.Errorf("Expected includeTeams=true, got %s", r.URL.Query().Get("includeTeams"))
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{}})
+	}))
+	defer server.Close()
+
+	client := &UmamiClient{
+		baseURL:    server.URL,
+		token:      "test-token",
+		httpClient: &http.Client{},
+	}
+
+	_, err := client.GetWebsites(true)
+	if err != nil {
+		t.Fatalf("GetWebsites failed: %v", err)
 	}
 }
 
@@ -132,6 +159,34 @@ func TestUmamiClient_GetStats(t *testing.T) {
 	}
 }
 
+func TestUmamiClient_GetStats_NumericShape(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"pageviews": 1000,
+			"visitors": 200,
+			"bounces": 150,
+			"totaltime": 50000
+		}`))
+	}))
+	defer server.Close()
+
+	client := &UmamiClient{
+		baseURL:    server.URL,
+		token:      "test-token",
+		httpClient: &http.Client{},
+	}
+
+	stats, err := client.GetStats("test-website-id", "1234567890", "1234567899")
+	if err != nil {
+		t.Fatalf("GetStats failed: %v", err)
+	}
+
+	if stats.PageViews.Value != 1000 || stats.PageViews.Change != 0 {
+		t.Errorf("Expected pageviews value=1000 change=0, got value=%d change=%d", stats.PageViews.Value, stats.PageViews.Change)
+	}
+}
+
 func TestUmamiClient_GetMetrics_DirectArray(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/websites/test-website-id/metrics" {
@@ -169,6 +224,47 @@ func TestUmamiClient_GetMetrics_DirectArray(t *testing.T) {
 
 	if metrics[0].X != "/blog/post1" || metrics[0].Y != 150 {
 		t.Errorf("Expected /blog/post1 with 150 views, got %s with %d", metrics[0].X, metrics[0].Y)
+	}
+}
+
+func TestUmamiClient_GetMetrics_UrlFallbackToPath(t *testing.T) {
+	callCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+
+		metricType := r.URL.Query().Get("type")
+		if callCount == 1 {
+			if metricType != "url" {
+				t.Errorf("Expected first call type=url, got %s", metricType)
+			}
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(`{"error":"Invalid metric type"}`))
+			return
+		}
+
+		if metricType != "path" {
+			t.Errorf("Expected fallback call type=path, got %s", metricType)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[{"x":"/","y":42}]`))
+	}))
+	defer server.Close()
+
+	client := &UmamiClient{
+		baseURL:    server.URL,
+		token:      "test-token",
+		httpClient: &http.Client{},
+	}
+
+	metrics, err := client.GetMetrics("test-website-id", "1234567890", "1234567899", "url", 10)
+	if err != nil {
+		t.Fatalf("GetMetrics failed: %v", err)
+	}
+	if callCount != 2 {
+		t.Fatalf("Expected 2 calls (url + fallback path), got %d", callCount)
+	}
+	if len(metrics) != 1 || metrics[0].X != "/" || metrics[0].Y != 42 {
+		t.Fatalf("Unexpected fallback metrics: %+v", metrics)
 	}
 }
 
@@ -315,7 +411,7 @@ func TestUmamiClient_ErrorHandling(t *testing.T) {
 				httpClient: &http.Client{},
 			}
 
-			_, err := client.GetWebsites()
+			_, err := client.GetWebsites(false)
 			if (err != nil) != tt.expectErr {
 				t.Errorf("Expected error=%v, got error=%v", tt.expectErr, err != nil)
 			}
