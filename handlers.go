@@ -5,11 +5,10 @@ import (
 	"fmt"
 )
 
-func (s *MCPServer) handleGetWebsites(id any) {
+func (s *MCPServer) execGetWebsites() (any, *Error) {
 	websites, err := s.client.GetWebsites()
 	if err != nil {
-		s.sendError(id, -32603, fmt.Sprintf("Failed to get websites: %v", err))
-		return
+		return nil, &Error{Code: -32603, Message: fmt.Sprintf("Failed to get websites: %v", err)}
 	}
 
 	data, _ := json.MarshalIndent(websites, "", "  ")
@@ -18,10 +17,10 @@ func (s *MCPServer) handleGetWebsites(id any) {
 		"text": string(data),
 	}}
 
-	s.sendResult(id, map[string]any{"content": content})
+	return map[string]any{"content": content}, nil
 }
 
-func (s *MCPServer) handleGetStats(id any, args json.RawMessage) {
+func (s *MCPServer) execGetStats(args json.RawMessage) (any, *Error) {
 	var params struct {
 		WebsiteID string `json:"website_id"`
 		StartDate string `json:"start_date"`
@@ -29,14 +28,12 @@ func (s *MCPServer) handleGetStats(id any, args json.RawMessage) {
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		s.sendError(id, -32602, "Invalid arguments")
-		return
+		return nil, &Error{Code: -32602, Message: "Invalid arguments"}
 	}
 
 	stats, err := s.client.GetStats(params.WebsiteID, params.StartDate, params.EndDate)
 	if err != nil {
-		s.sendError(id, -32603, fmt.Sprintf("Failed to get stats: %v", err))
-		return
+		return nil, &Error{Code: -32603, Message: fmt.Sprintf("Failed to get stats: %v", err)}
 	}
 
 	data, _ := json.MarshalIndent(stats, "", "  ")
@@ -45,9 +42,10 @@ func (s *MCPServer) handleGetStats(id any, args json.RawMessage) {
 		"text": string(data),
 	}}
 
-	s.sendResult(id, map[string]any{"content": content})
+	return map[string]any{"content": content}, nil
 }
-func (s *MCPServer) handleGetPageViews(id any, args json.RawMessage) {
+
+func (s *MCPServer) execGetPageViews(args json.RawMessage) (any, *Error) {
 	var params struct {
 		WebsiteID string `json:"website_id"`
 		StartDate string `json:"start_date"`
@@ -56,8 +54,7 @@ func (s *MCPServer) handleGetPageViews(id any, args json.RawMessage) {
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		s.sendError(id, -32602, "Invalid arguments")
-		return
+		return nil, &Error{Code: -32602, Message: "Invalid arguments"}
 	}
 
 	if params.Unit == "" {
@@ -66,8 +63,7 @@ func (s *MCPServer) handleGetPageViews(id any, args json.RawMessage) {
 
 	pageviews, err := s.client.GetPageViews(params.WebsiteID, params.StartDate, params.EndDate, params.Unit)
 	if err != nil {
-		s.sendError(id, -32603, fmt.Sprintf("Failed to get page views: %v", err))
-		return
+		return nil, &Error{Code: -32603, Message: fmt.Sprintf("Failed to get page views: %v", err)}
 	}
 
 	data, _ := json.MarshalIndent(pageviews, "", "  ")
@@ -76,9 +72,10 @@ func (s *MCPServer) handleGetPageViews(id any, args json.RawMessage) {
 		"text": string(data),
 	}}
 
-	s.sendResult(id, map[string]any{"content": content})
+	return map[string]any{"content": content}, nil
 }
-func (s *MCPServer) handleGetMetrics(id any, args json.RawMessage) {
+
+func (s *MCPServer) execGetMetrics(args json.RawMessage) (any, *Error) {
 	var params struct {
 		WebsiteID  string `json:"website_id"`
 		StartDate  string `json:"start_date"`
@@ -88,8 +85,7 @@ func (s *MCPServer) handleGetMetrics(id any, args json.RawMessage) {
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		s.sendError(id, -32602, "Invalid arguments")
-		return
+		return nil, &Error{Code: -32602, Message: "Invalid arguments"}
 	}
 
 	if params.Limit == 0 {
@@ -100,8 +96,7 @@ func (s *MCPServer) handleGetMetrics(id any, args json.RawMessage) {
 		params.WebsiteID, params.StartDate, params.EndDate, params.MetricType, params.Limit,
 	)
 	if err != nil {
-		s.sendError(id, -32603, fmt.Sprintf("Failed to get metrics: %v", err))
-		return
+		return nil, &Error{Code: -32603, Message: fmt.Sprintf("Failed to get metrics: %v", err)}
 	}
 
 	data, _ := json.MarshalIndent(metrics, "", "  ")
@@ -110,23 +105,21 @@ func (s *MCPServer) handleGetMetrics(id any, args json.RawMessage) {
 		"text": string(data),
 	}}
 
-	s.sendResult(id, map[string]any{"content": content})
+	return map[string]any{"content": content}, nil
 }
 
-func (s *MCPServer) handleGetActive(id any, args json.RawMessage) {
+func (s *MCPServer) execGetActive(args json.RawMessage) (any, *Error) {
 	var params struct {
 		WebsiteID string `json:"website_id"`
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		s.sendError(id, -32602, "Invalid arguments")
-		return
+		return nil, &Error{Code: -32602, Message: "Invalid arguments"}
 	}
 
 	active, err := s.client.GetActive(params.WebsiteID)
 	if err != nil {
-		s.sendError(id, -32603, fmt.Sprintf("Failed to get active visitors: %v", err))
-		return
+		return nil, &Error{Code: -32603, Message: fmt.Sprintf("Failed to get active visitors: %v", err)}
 	}
 
 	data, _ := json.MarshalIndent(active, "", "  ")
@@ -135,5 +128,5 @@ func (s *MCPServer) handleGetActive(id any, args json.RawMessage) {
 		"text": string(data),
 	}}
 
-	s.sendResult(id, map[string]any{"content": content})
+	return map[string]any{"content": content}, nil
 }

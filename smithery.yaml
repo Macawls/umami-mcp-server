@@ -1,0 +1,25 @@
+startCommand:
+  type: http
+  configSchema:
+    type: object
+    required:
+      - umamiHost
+      - umamiUsername
+      - umamiPassword
+    properties:
+      umamiHost:
+        type: string
+        description: "The base URL of your Umami instance (e.g. https://analytics.example.com)"
+      umamiUsername:
+        type: string
+        description: "Username for Umami authentication"
+      umamiPassword:
+        type: string
+        description: "Password for Umami authentication"
+  exampleConfig:
+    umamiHost: "https://analytics.example.com"
+    umamiUsername: "admin"
+    umamiPassword: "password"
+build:
+  dockerfile: Dockerfile
+  dockerBuildPath: .

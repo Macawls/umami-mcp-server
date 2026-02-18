@@ -1,22 +1,15 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"strings"
 	"testing"
 )
 
 func TestMCPServer_HandleInitialize(t *testing.T) {
-	var output bytes.Buffer
-	server := &MCPServer{client: &UmamiClient{}, stdout: &output}
+	server := &MCPServer{client: &UmamiClient{}}
 
-	server.handleInitialize(Request{JSONRPC: "2.0", ID: 1, Method: "initialize"})
-
-	var resp Response
-	if err := json.Unmarshal(output.Bytes(), &resp); err != nil {
-		t.Fatalf("Failed to parse response: %v", err)
-	}
+	resp := server.HandleRequest(Request{JSONRPC: "2.0", ID: 1, Method: "initialize"})
 
 	if resp.Error != nil {
 		t.Errorf("Expected no error, got: %v", resp.Error)
@@ -32,15 +25,9 @@ func TestMCPServer_HandleInitialize(t *testing.T) {
 }
 
 func TestMCPServer_HandleToolsList(t *testing.T) {
-	var output bytes.Buffer
-	server := &MCPServer{client: &UmamiClient{}, stdout: &output}
+	server := &MCPServer{client: &UmamiClient{}}
 
-	server.handleToolsList(Request{JSONRPC: "2.0", ID: 2, Method: "tools/list"})
-
-	var resp Response
-	if err := json.Unmarshal(output.Bytes(), &resp); err != nil {
-		t.Fatalf("Failed to parse response: %v", err)
-	}
+	resp := server.HandleRequest(Request{JSONRPC: "2.0", ID: 2, Method: "tools/list"})
 
 	if resp.Error != nil {
 		t.Fatalf("Unexpected error: %v", resp.Error)
@@ -50,9 +37,9 @@ func TestMCPServer_HandleToolsList(t *testing.T) {
 	if !ok {
 		t.Fatal("Result is not a map")
 	}
-	toolsInterface, ok := result["tools"].([]any)
+	toolsInterface, ok := result["tools"].([]map[string]any)
 	if !ok {
-		t.Fatal("Tools is not an array")
+		t.Fatal("Tools is not []map[string]any")
 	}
 
 	if len(toolsInterface) != 5 {
@@ -60,13 +47,7 @@ func TestMCPServer_HandleToolsList(t *testing.T) {
 	}
 
 	expectedTools := []string{"get_websites", "get_stats", "get_pageviews", "get_metrics", "get_active"}
-	for i, toolInterface := range toolsInterface {
-		tool, ok := toolInterface.(map[string]any)
-		if !ok {
-			t.Errorf("Tool %d is not a map", i)
-			continue
-		}
-
+	for i, tool := range toolsInterface {
 		name, ok := tool["name"].(string)
 		if !ok {
 			t.Errorf("Tool %d name is not a string", i)
@@ -90,16 +71,9 @@ func TestMCPServer_HandleToolsList(t *testing.T) {
 }
 
 func TestMCPServer_UnknownMethod(t *testing.T) {
-	input := strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"unknown"}` + "\n")
-	var output bytes.Buffer
-	server := &MCPServer{client: &UmamiClient{}, stdin: input, stdout: &output}
+	server := &MCPServer{client: &UmamiClient{}}
 
-	_ = server.Run()
-
-	var resp Response
-	if err := json.Unmarshal(output.Bytes(), &resp); err != nil {
-		t.Fatalf("Failed to parse response: %v", err)
-	}
+	resp := server.HandleRequest(Request{JSONRPC: "2.0", ID: 1, Method: "unknown"})
 
 	if resp.Error == nil || resp.Error.Code != -32601 {
 		t.Error("Expected error -32601 for unknown method")
