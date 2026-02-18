@@ -146,7 +146,7 @@ func generateSessionID() string {
 	return hex.EncodeToString(b)
 }
 
-func writeJSONRPC(w http.ResponseWriter, id any, result any, rpcErr *Error, status int) {
+func writeJSONRPC(w http.ResponseWriter, id, result any, rpcErr *Error, status int) {
 	resp := Response{JSONRPC: "2.0", ID: id}
 	if rpcErr != nil {
 		resp.Error = rpcErr

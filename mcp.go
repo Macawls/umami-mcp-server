@@ -63,7 +63,7 @@ func (s *MCPServer) HandleRequest(req Request) Response {
 
 	switch req.Method {
 	case "initialize":
-		result, rpcErr = s.processInitialize()
+		result = s.processInitialize()
 	case "tools/list":
 		result, rpcErr = s.processToolsList()
 	case "tools/call":
@@ -87,7 +87,7 @@ func (s *MCPServer) send(resp Response) {
 	_, _ = fmt.Fprintf(s.stdout, "%s\n", data)
 }
 
-func (s *MCPServer) processInitialize() (any, *Error) {
+func (s *MCPServer) processInitialize() any {
 	return map[string]any{
 		"protocolVersion": "2024-11-05",
 		"serverInfo": map[string]string{
@@ -97,7 +97,7 @@ func (s *MCPServer) processInitialize() (any, *Error) {
 		"capabilities": map[string]any{
 			"tools": map[string]any{},
 		},
-	}, nil
+	}
 }
 
 func (s *MCPServer) processToolsList() (any, *Error) {

@@ -10,30 +10,31 @@ import (
 )
 
 func setupTestUmamiServer() *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/auth/login" {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = fmt.Fprint(w, `{"token":"test-token"}`)
-			return
-		}
-		if strings.HasPrefix(r.URL.Path, "/api/websites") && strings.HasSuffix(r.URL.Path, "/active") {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = fmt.Fprint(w, `{"x":5}`)
-			return
-		}
-		if r.URL.Path == "/api/websites" {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = fmt.Fprint(w, `{"data":[]}`)
-			return
-		}
-		http.NotFound(w, r)
-	}))
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/auth/login", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `{"token":"test-token"}`)
+	})
+	mux.HandleFunc("/api/websites", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `{"data":[]}`)
+	})
+	return httptest.NewServer(mux)
 }
 
-func initializeSession(t *testing.T, handler *HTTPHandler, umamiURL string) string {
+func mcpURL(umamiURL string) string {
+	return "/mcp?umamiHost=" + umamiURL +
+		"&umamiUsername=admin&umamiPassword=pass"
+}
+
+func initializeSession(
+	t *testing.T, handler *HTTPHandler, umamiURL string,
+) string {
 	t.Helper()
 	body := `{"jsonrpc":"2.0","id":1,"method":"initialize"}`
-	req := httptest.NewRequest(http.MethodPost, "/mcp?umamiHost="+umamiURL+"&umamiUsername=admin&umamiPassword=pass", strings.NewReader(body))
+	req := httptest.NewRequest(
+		http.MethodPost, mcpURL(umamiURL), strings.NewReader(body),
+	)
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 
@@ -53,12 +54,17 @@ func TestHTTP_Initialize(t *testing.T) {
 	defer umami.Close()
 
 	handler := NewHTTPHandler()
-	sessionID := initializeSession(t, handler, umami.URL)
+	_ = initializeSession(t, handler, umami.URL)
+
+	w := httptest.NewRecorder()
+	initBody := `{"jsonrpc":"2.0","id":1,"method":"initialize"}`
+	req := httptest.NewRequest(
+		http.MethodPost, mcpURL(umami.URL), strings.NewReader(initBody),
+	)
+	handler.ServeHTTP(w, req)
 
 	var resp Response
-	body := httptest.NewRecorder()
-	handler.ServeHTTP(body, httptest.NewRequest(http.MethodPost, "/mcp?umamiHost="+umami.URL+"&umamiUsername=admin&umamiPassword=pass", strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"initialize"}`)))
-	if err := json.Unmarshal(body.Body.Bytes(), &resp); err != nil {
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
@@ -73,8 +79,6 @@ func TestHTTP_Initialize(t *testing.T) {
 	if result["protocolVersion"] != "2024-11-05" {
 		t.Errorf("Wrong protocol version: %v", result["protocolVersion"])
 	}
-
-	_ = sessionID
 }
 
 func TestHTTP_ToolsList(t *testing.T) {
@@ -85,7 +89,9 @@ func TestHTTP_ToolsList(t *testing.T) {
 	sessionID := initializeSession(t, handler, umami.URL)
 
 	body := `{"jsonrpc":"2.0","id":2,"method":"tools/list"}`
-	req := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(body))
+	req := httptest.NewRequest(
+		http.MethodPost, "/mcp", strings.NewReader(body),
+	)
 	req.Header.Set("Mcp-Session-Id", sessionID)
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
@@ -106,7 +112,9 @@ func TestHTTP_ToolsList(t *testing.T) {
 func TestHTTP_Notification(t *testing.T) {
 	handler := NewHTTPHandler()
 	body := `{"jsonrpc":"2.0","method":"notifications/initialized"}`
-	req := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(body))
+	req := httptest.NewRequest(
+		http.MethodPost, "/mcp", strings.NewReader(body),
+	)
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 
@@ -118,7 +126,9 @@ func TestHTTP_Notification(t *testing.T) {
 func TestHTTP_MissingSessionHeader(t *testing.T) {
 	handler := NewHTTPHandler()
 	body := `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`
-	req := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(body))
+	req := httptest.NewRequest(
+		http.MethodPost, "/mcp", strings.NewReader(body),
+	)
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 
@@ -134,7 +144,7 @@ func TestHTTP_DeleteSession(t *testing.T) {
 	handler := NewHTTPHandler()
 	sessionID := initializeSession(t, handler, umami.URL)
 
-	req := httptest.NewRequest(http.MethodDelete, "/mcp", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/mcp", http.NoBody)
 	req.Header.Set("Mcp-Session-Id", sessionID)
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
@@ -144,7 +154,9 @@ func TestHTTP_DeleteSession(t *testing.T) {
 	}
 
 	body := `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`
-	req2 := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(body))
+	req2 := httptest.NewRequest(
+		http.MethodPost, "/mcp", strings.NewReader(body),
+	)
 	req2.Header.Set("Mcp-Session-Id", sessionID)
 	w2 := httptest.NewRecorder()
 	handler.ServeHTTP(w2, req2)
@@ -156,7 +168,7 @@ func TestHTTP_DeleteSession(t *testing.T) {
 
 func TestHTTP_GetMethodNotAllowed(t *testing.T) {
 	handler := NewHTTPHandler()
-	req := httptest.NewRequest(http.MethodGet, "/mcp", nil)
+	req := httptest.NewRequest(http.MethodGet, "/mcp", http.NoBody)
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 

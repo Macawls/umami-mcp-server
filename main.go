@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 var (
@@ -50,9 +51,13 @@ func main() {
 		if port == "" {
 			port = "8080"
 		}
-		handler := NewHTTPHandler()
+		srv := &http.Server{
+			Addr:              ":" + port,
+			Handler:           NewHTTPHandler(),
+			ReadHeaderTimeout: 10 * time.Second,
+		}
 		log.Printf("Starting HTTP transport on :%s", port)
-		if err := http.ListenAndServe(":"+port, handler); err != nil {
+		if err := srv.ListenAndServe(); err != nil {
 			log.Fatalf("HTTP server error: %v", err)
 		}
 	default:
