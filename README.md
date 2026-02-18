@@ -16,10 +16,6 @@
     <img src="https://github.com/Macawls/umami-mcp-server/actions/workflows/release.yml/badge.svg" alt="Release" />
   </a>
 
-  <a href="https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml">
-    <img src="https://github.com/Macawls/umami-mcp-server/actions/workflows/pages.yml/badge.svg" alt="Deploy to GitHub Pages" />
-  </a>
-
   <a href="https://lobehub.com/mcp/macawls-umami-mcp-server">
     <img src="https://lobehub.com/badge/mcp/macawls-umami-mcp-server?style=plastic" alt="MCP Badge" />
   </a>
@@ -273,6 +269,50 @@ All use similar JSON format as above. Docker and secure prompts work the same wa
 - **get_metrics** - See browsers, countries, devices, and more
 - **get_active** - Current active visitors
 
+## Remote Usage (No Install)
+
+A hosted instance is available at `https://umami-mcp.macawls.dev/mcp`. You can connect to it directly from any MCP client that supports HTTP transport — no binary or Docker needed.
+
+Credentials are passed as query parameters:
+
+```
+https://umami-mcp.macawls.dev/mcp?umamiHost=https://your-instance.com&umamiUsername=admin&umamiPassword=pass
+```
+
+### Claude Desktop
+
+Add to your config with `type: "url"`:
+
+```json
+{
+  "mcpServers": {
+    "umami": {
+      "type": "url",
+      "url": "https://umami-mcp.macawls.dev/mcp?umamiHost=https://your-instance.com&umamiUsername=admin&umamiPassword=pass"
+    }
+  }
+}
+```
+
+### VS Code (GitHub Copilot)
+
+Add to `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "umami": {
+      "type": "http",
+      "url": "https://umami-mcp.macawls.dev/mcp?umamiHost=https://your-instance.com&umamiUsername=admin&umamiPassword=pass"
+    }
+  }
+}
+```
+
+### Other Clients
+
+Any MCP client that supports Streamable HTTP can connect using the URL above.
+
 ## Transport Modes
 
 The server supports two transport modes, controlled by the `TRANSPORT` environment variable:
@@ -283,7 +323,7 @@ Used by local MCP clients like Claude Desktop, VS Code, Cursor, etc. This is the
 
 ### HTTP
 
-Used for remote deployments (e.g. Smithery). The server exposes a `/mcp` endpoint that speaks Streamable HTTP.
+The server exposes a `/mcp` endpoint that speaks Streamable HTTP. Use this for self-hosting or remote deployments.
 
 ```bash
 TRANSPORT=http PORT=9999 ./umami-mcp-server

@@ -55,6 +55,9 @@ func main() {
 		mux := http.NewServeMux()
 		mux.Handle("/mcp", handler)
 		mux.HandleFunc("/.well-known/mcp/server-card.json", handler.handleServerCard)
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "/app/index.html")
+		})
 		srv := &http.Server{
 			Addr:              ":" + port,
 			Handler:           mux,
