@@ -17,8 +17,8 @@ dist/
 
 # Documentation
 *.md
+!README.md
 CNAME
-llms.md
 
 # Configuration files (should be provided at runtime)
 config.yaml
