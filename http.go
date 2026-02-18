@@ -48,7 +48,7 @@ func (h *HTTPHandler) handlePost(w http.ResponseWriter, r *http.Request) {
 		Method string `json:"method"`
 	}
 	if err := json.Unmarshal(body, &msg); err != nil {
-		writeJSONRPC(w, nil, nil, &Error{Code: -32700, Message: "Parse error"}, http.StatusOK)
+		writeJSONRPCError(w, nil, &Error{Code: -32700, Message: "Parse error"}, http.StatusOK)
 		return
 	}
 
@@ -59,7 +59,7 @@ func (h *HTTPHandler) handlePost(w http.ResponseWriter, r *http.Request) {
 
 	var req Request
 	if err := json.Unmarshal(body, &req); err != nil {
-		writeJSONRPC(w, nil, nil, &Error{Code: -32700, Message: "Parse error"}, http.StatusOK)
+		writeJSONRPCError(w, nil, &Error{Code: -32700, Message: "Parse error"}, http.StatusOK)
 		return
 	}
 
@@ -95,7 +95,7 @@ func (h *HTTPHandler) handleInitialize(w http.ResponseWriter, r *http.Request, r
 	umamiPassword := query.Get("umamiPassword")
 
 	if umamiHost == "" || umamiUsername == "" || umamiPassword == "" {
-		writeJSONRPC(w, req.ID, nil, &Error{
+		writeJSONRPCError(w, req.ID, &Error{
 			Code:    -32602,
 			Message: "Missing required query params: umamiHost, umamiUsername, umamiPassword",
 		}, http.StatusOK)
@@ -104,7 +104,7 @@ func (h *HTTPHandler) handleInitialize(w http.ResponseWriter, r *http.Request, r
 
 	client := NewUmamiClient(umamiHost, umamiUsername, umamiPassword)
 	if err := client.Authenticate(); err != nil {
-		writeJSONRPC(w, req.ID, nil, &Error{
+		writeJSONRPCError(w, req.ID, &Error{
 			Code:    -32603,
 			Message: fmt.Sprintf("Authentication failed: %v", err),
 		}, http.StatusOK)
@@ -146,13 +146,8 @@ func generateSessionID() string {
 	return hex.EncodeToString(b)
 }
 
-func writeJSONRPC(w http.ResponseWriter, id, result any, rpcErr *Error, status int) {
-	resp := Response{JSONRPC: "2.0", ID: id}
-	if rpcErr != nil {
-		resp.Error = rpcErr
-	} else {
-		resp.Result = result
-	}
+func writeJSONRPCError(w http.ResponseWriter, id any, rpcErr *Error, status int) {
+	resp := Response{JSONRPC: "2.0", ID: id, Error: rpcErr}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	data, _ := json.Marshal(resp)
