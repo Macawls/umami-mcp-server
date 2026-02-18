@@ -183,6 +183,47 @@ func TestHTTP_OptionsPreflight(t *testing.T) {
 	}
 }
 
+func TestHTTP_ServerCard(t *testing.T) {
+	handler := NewHTTPHandler()
+	req := httptest.NewRequest(http.MethodGet, "/.well-known/mcp/server-card.json", http.NoBody)
+	w := httptest.NewRecorder()
+	handler.handleServerCard(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected 200, got %d", w.Code)
+	}
+	if ct := w.Header().Get("Content-Type"); ct != "application/json" {
+		t.Errorf("Expected application/json, got %s", ct)
+	}
+
+	var card map[string]json.RawMessage
+	if err := json.Unmarshal(w.Body.Bytes(), &card); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	for _, key := range []string{"serverInfo", "tools", "prompts", "resources"} {
+		if _, ok := card[key]; !ok {
+			t.Errorf("Missing key %q in server card", key)
+		}
+	}
+
+	var tools []json.RawMessage
+	if err := json.Unmarshal(card["tools"], &tools); err != nil {
+		t.Fatalf("Failed to parse tools: %v", err)
+	}
+	if len(tools) != 5 {
+		t.Errorf("Expected 5 tools, got %d", len(tools))
+	}
+
+	var prompts []json.RawMessage
+	if err := json.Unmarshal(card["prompts"], &prompts); err != nil {
+		t.Fatalf("Failed to parse prompts: %v", err)
+	}
+	if len(prompts) != 4 {
+		t.Errorf("Expected 4 prompts, got %d", len(prompts))
+	}
+}
+
 func TestHTTP_GetMethodNotAllowed(t *testing.T) {
 	handler := NewHTTPHandler()
 	req := httptest.NewRequest(http.MethodGet, "/mcp", http.NoBody)

@@ -51,9 +51,13 @@ func main() {
 		if port == "" {
 			port = "8080"
 		}
+		handler := NewHTTPHandler()
+		mux := http.NewServeMux()
+		mux.Handle("/mcp", handler)
+		mux.HandleFunc("/.well-known/mcp/server-card.json", handler.handleServerCard)
 		srv := &http.Server{
 			Addr:              ":" + port,
-			Handler:           NewHTTPHandler(),
+			Handler:           mux,
 			ReadHeaderTimeout: 10 * time.Second,
 		}
 		log.Printf("Starting HTTP transport on :%s", port)

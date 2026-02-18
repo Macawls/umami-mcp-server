@@ -156,6 +156,38 @@ func generateSessionID() string {
 	return hex.EncodeToString(b)
 }
 
+func (h *HTTPHandler) handleServerCard(w http.ResponseWriter, _ *http.Request) {
+	toolsData, _ := toolsFS.ReadFile("tools.json")
+	promptsData, _ := promptsFS.ReadFile("prompts.json")
+
+	var tools []json.RawMessage
+	_ = json.Unmarshal(toolsData, &tools)
+
+	var prompts []json.RawMessage
+	_ = json.Unmarshal(promptsData, &prompts)
+
+	card := map[string]any{
+		"serverInfo": map[string]string{
+			"name":    "umami-mcp",
+			"version": version,
+		},
+		"tools":   tools,
+		"prompts": prompts,
+		"resources": []map[string]any{
+			{
+				"uri":         "umami://websites",
+				"name":        "Website List",
+				"description": "List of all websites configured in Umami",
+				"mimeType":    "application/json",
+			},
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	data, _ := json.Marshal(card)
+	_, _ = w.Write(data)
+}
+
 func writeJSONRPCError(w http.ResponseWriter, id any, rpcErr *Error) {
 	resp := Response{JSONRPC: "2.0", ID: id, Error: rpcErr}
 	w.Header().Set("Content-Type", "application/json")
