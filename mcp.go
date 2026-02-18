@@ -97,7 +97,7 @@ func (s *MCPServer) send(resp Response) {
 
 func (s *MCPServer) processInitialize() any {
 	return map[string]any{
-		"protocolVersion": "2024-11-05",
+		"protocolVersion": "2025-03-26",
 		"serverInfo": map[string]string{
 			"name":    "umami-mcp",
 			"version": version,

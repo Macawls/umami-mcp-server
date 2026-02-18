@@ -76,7 +76,7 @@ func TestHTTP_Initialize(t *testing.T) {
 	if !ok {
 		t.Fatal("Result is not a map")
 	}
-	if result["protocolVersion"] != "2024-11-05" {
+	if result["protocolVersion"] != "2025-03-26" {
 		t.Errorf("Wrong protocol version: %v", result["protocolVersion"])
 	}
 }
@@ -163,6 +163,23 @@ func TestHTTP_DeleteSession(t *testing.T) {
 
 	if w2.Code != http.StatusNotFound {
 		t.Errorf("Expected 404 after delete, got %d", w2.Code)
+	}
+}
+
+func TestHTTP_OptionsPreflight(t *testing.T) {
+	handler := NewHTTPHandler()
+	req := httptest.NewRequest(http.MethodOptions, "/mcp", http.NoBody)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Errorf("Expected 204, got %d", w.Code)
+	}
+	if w.Header().Get("Access-Control-Allow-Origin") == "" {
+		t.Error("Missing Access-Control-Allow-Origin header")
+	}
+	if w.Header().Get("Access-Control-Expose-Headers") == "" {
+		t.Error("Missing Access-Control-Expose-Headers header")
 	}
 }
 
