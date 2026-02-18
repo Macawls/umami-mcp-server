@@ -1,0 +1,29 @@
+[
+  {
+    "name": "analytics-report",
+    "description": "Generate a comprehensive analytics report for a website",
+    "arguments": [
+      { "name": "days", "description": "Number of days to analyze (default: 30)", "required": false }
+    ]
+  },
+  {
+    "name": "top-pages",
+    "description": "Show the most visited pages on a website",
+    "arguments": [
+      { "name": "days", "description": "Number of days to look back (default: 7)", "required": false },
+      { "name": "limit", "description": "Number of pages to show (default: 10)", "required": false }
+    ]
+  },
+  {
+    "name": "visitor-insights",
+    "description": "Break down visitors by country, device, browser, and OS",
+    "arguments": [
+      { "name": "days", "description": "Number of days to analyze (default: 30)", "required": false }
+    ]
+  },
+  {
+    "name": "realtime-check",
+    "description": "Check current active visitors on a website",
+    "arguments": []
+  }
+]
