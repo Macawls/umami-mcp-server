@@ -1,3 +1,4 @@
+runtime: container
 startCommand:
   type: http
   configSchema:

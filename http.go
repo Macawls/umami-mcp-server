@@ -23,8 +23,18 @@ func NewHTTPHandler() *HTTPHandler {
 	return &HTTPHandler{}
 }
 
+func setCORS(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Mcp-Session-Id")
+	w.Header().Set("Access-Control-Expose-Headers", "Mcp-Session-Id")
+}
+
 func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	setCORS(w)
+
 	switch r.Method {
+	case http.MethodOptions:
+		w.WriteHeader(http.StatusNoContent)
 	case http.MethodPost:
 		h.handlePost(w, r)
 	case http.MethodGet:

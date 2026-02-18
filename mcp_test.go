@@ -22,7 +22,7 @@ func TestMCPServer_HandleInitialize(t *testing.T) {
 	if !ok {
 		t.Fatal("Result is not a map")
 	}
-	if result["protocolVersion"] != "2024-11-05" {
+	if result["protocolVersion"] != "2025-03-26" {
 		t.Errorf("Wrong protocol version: %v", result["protocolVersion"])
 	}
 
