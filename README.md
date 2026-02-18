@@ -28,7 +28,7 @@
 
 # Umami MCP Server
 
-Connect your Umami Analytics to any MCP client - Claude Desktop, VS Code, Cursor, Windsurf, Zed, and more.
+Connect your Umami Analytics to any MCP client - Claude Desktop, VS Code, Cursor, Windsurf, Zed, Smithery, and more.
 
 <a href="https://glama.ai/mcp/servers/@Macawls/umami-mcp-server">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@Macawls/umami-mcp-server/badge" />
@@ -272,6 +272,51 @@ All use similar JSON format as above. Docker and secure prompts work the same wa
 - **get_pageviews** - View page traffic over time
 - **get_metrics** - See browsers, countries, devices, and more
 - **get_active** - Current active visitors
+
+## Transport Modes
+
+The server supports two transport modes, controlled by the `TRANSPORT` environment variable:
+
+### Stdio (default)
+
+Used by local MCP clients like Claude Desktop, VS Code, Cursor, etc. This is the default — no extra configuration needed.
+
+### HTTP
+
+Used for remote deployments (e.g. Smithery). The server exposes a `/mcp` endpoint that speaks Streamable HTTP.
+
+```bash
+TRANSPORT=http PORT=9999 ./umami-mcp-server
+```
+
+Credentials are passed as query parameters on the `initialize` request:
+
+```bash
+curl -X POST "http://localhost:9999/mcp?umamiHost=https://analytics.example.com&umamiUsername=admin&umamiPassword=pass" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize"}'
+```
+
+The response includes a `Mcp-Session-Id` header to use for subsequent requests.
+
+### Docker
+
+When using Docker, the image defaults to HTTP mode:
+
+```bash
+docker run -p 8080:8080 ghcr.io/macawls/umami-mcp-server
+```
+
+For local stdio usage with Docker, override the transport:
+
+```bash
+docker run -i --rm \
+  -e TRANSPORT=stdio \
+  -e UMAMI_URL="https://your-instance.com" \
+  -e UMAMI_USERNAME="username" \
+  -e UMAMI_PASSWORD="password" \
+  ghcr.io/macawls/umami-mcp-server
+```
 
 ## Alternative Configuration
 

@@ -31,7 +31,7 @@ func (s *MCPServer) Run() error {
 	for scanner.Scan() {
 		var rawMsg json.RawMessage
 		if err := json.Unmarshal(scanner.Bytes(), &rawMsg); err != nil {
-			s.sendError(nil, -32700, "Parse error")
+			s.send(Response{JSONRPC: "2.0", ID: nil, Error: &Error{Code: -32700, Message: "Parse error"}})
 			continue
 		}
 
@@ -40,40 +40,46 @@ func (s *MCPServer) Run() error {
 			Method string `json:"method"`
 		}
 		if err := json.Unmarshal(rawMsg, &msgType); err != nil {
-			s.sendError(nil, -32700, "Parse error")
+			s.send(Response{JSONRPC: "2.0", ID: nil, Error: &Error{Code: -32700, Message: "Parse error"}})
 			continue
 		}
 
 		if msgType.ID != nil {
 			var req Request
 			if err := json.Unmarshal(rawMsg, &req); err != nil {
-				s.sendError(nil, -32700, "Parse error")
+				s.send(Response{JSONRPC: "2.0", ID: nil, Error: &Error{Code: -32700, Message: "Parse error"}})
 				continue
 			}
-
-			switch req.Method {
-			case "initialize":
-				s.handleInitialize(req)
-			case "tools/list":
-				s.handleToolsList(req)
-			case "tools/call":
-				s.handleToolCall(req)
-			case "resources/list":
-				s.sendResult(req.ID, map[string]any{"resources": []any{}})
-			case "prompts/list":
-				s.sendResult(req.ID, map[string]any{"prompts": []any{}})
-			default:
-				s.sendError(req.ID, -32601, "Method not found")
-			}
-		} else {
-			switch msgType.Method {
-			case "notifications/initialized":
-			case "notifications/canceled":
-			default:
-			}
+			s.send(s.HandleRequest(req))
 		}
+		// Notifications (no id): silently ignore
 	}
 	return scanner.Err()
+}
+
+func (s *MCPServer) HandleRequest(req Request) Response {
+	var result any
+	var rpcErr *Error
+
+	switch req.Method {
+	case "initialize":
+		result = s.processInitialize()
+	case "tools/list":
+		result, rpcErr = s.processToolsList()
+	case "tools/call":
+		result, rpcErr = s.processToolCall(req.Params)
+	case "resources/list":
+		result = map[string]any{"resources": []any{}}
+	case "prompts/list":
+		result = map[string]any{"prompts": []any{}}
+	default:
+		rpcErr = &Error{Code: -32601, Message: "Method not found"}
+	}
+
+	if rpcErr != nil {
+		return Response{JSONRPC: "2.0", ID: req.ID, Error: rpcErr}
+	}
+	return Response{JSONRPC: "2.0", ID: req.ID, Result: result}
 }
 
 func (s *MCPServer) send(resp Response) {
@@ -81,26 +87,8 @@ func (s *MCPServer) send(resp Response) {
 	_, _ = fmt.Fprintf(s.stdout, "%s\n", data)
 }
 
-func (s *MCPServer) sendError(id any, code int, message string) {
-	s.send(Response{
-		JSONRPC: "2.0",
-		ID:      id,
-		Error: &Error{
-			Code:    code,
-			Message: message,
-		},
-	})
-}
-
-func (s *MCPServer) sendResult(id, result any) {
-	s.send(Response{
-		JSONRPC: "2.0",
-		ID:      id,
-		Result:  result,
-	})
-}
-func (s *MCPServer) handleInitialize(req Request) {
-	result := map[string]any{
+func (s *MCPServer) processInitialize() any {
+	return map[string]any{
 		"protocolVersion": "2024-11-05",
 		"serverInfo": map[string]string{
 			"name":    "umami-mcp",
@@ -110,47 +98,44 @@ func (s *MCPServer) handleInitialize(req Request) {
 			"tools": map[string]any{},
 		},
 	}
-	s.sendResult(req.ID, result)
 }
 
-func (s *MCPServer) handleToolsList(req Request) {
+func (s *MCPServer) processToolsList() (any, *Error) {
 	toolsData, err := toolsFS.ReadFile("mcp-tools-schema.json")
 	if err != nil {
-		s.sendError(req.ID, -32603, fmt.Sprintf("Failed to load tools: %v", err))
-		return
+		return nil, &Error{Code: -32603, Message: fmt.Sprintf("Failed to load tools: %v", err)}
 	}
 
 	var tools []map[string]any
 	if err := json.Unmarshal(toolsData, &tools); err != nil {
-		s.sendError(req.ID, -32603, fmt.Sprintf("Failed to parse tools: %v", err))
-		return
+		return nil, &Error{Code: -32603, Message: fmt.Sprintf("Failed to parse tools: %v", err)}
 	}
 
-	s.sendResult(req.ID, map[string]any{"tools": tools})
+	return map[string]any{"tools": tools}, nil
 }
-func (s *MCPServer) handleToolCall(req Request) {
+
+func (s *MCPServer) processToolCall(rawParams json.RawMessage) (any, *Error) {
 	var params struct {
 		Name      string          `json:"name"`
 		Arguments json.RawMessage `json:"arguments"`
 	}
 
-	if err := json.Unmarshal(req.Params, &params); err != nil {
-		s.sendError(req.ID, -32602, "Invalid params")
-		return
+	if err := json.Unmarshal(rawParams, &params); err != nil {
+		return nil, &Error{Code: -32602, Message: "Invalid params"}
 	}
 
 	switch params.Name {
 	case "get_websites":
-		s.handleGetWebsites(req.ID)
+		return s.execGetWebsites()
 	case "get_stats":
-		s.handleGetStats(req.ID, params.Arguments)
+		return s.execGetStats(params.Arguments)
 	case "get_pageviews":
-		s.handleGetPageViews(req.ID, params.Arguments)
+		return s.execGetPageViews(params.Arguments)
 	case "get_metrics":
-		s.handleGetMetrics(req.ID, params.Arguments)
+		return s.execGetMetrics(params.Arguments)
 	case "get_active":
-		s.handleGetActive(req.ID, params.Arguments)
+		return s.execGetActive(params.Arguments)
 	default:
-		s.sendError(req.ID, -32602, fmt.Sprintf("Unknown tool: %s", params.Name))
+		return nil, &Error{Code: -32602, Message: fmt.Sprintf("Unknown tool: %s", params.Name)}
 	}
 }

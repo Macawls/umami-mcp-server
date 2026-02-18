@@ -18,4 +18,6 @@ WORKDIR /app
 
 COPY --from=builder /build/umami-mcp /app/umami-mcp
 
+ENV TRANSPORT=http
+
 ENTRYPOINT ["/app/umami-mcp"]

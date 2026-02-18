@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"time"
 )
 
 var (
@@ -38,18 +40,40 @@ func main() {
 		os.Exit(0)
 	}
 
-	config, err := LoadConfig()
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+	transport := os.Getenv("TRANSPORT")
+	if transport == "" {
+		transport = "stdio"
 	}
 
-	client := NewUmamiClient(config.UmamiURL, config.Username, config.Password)
-	if err := client.Authenticate(); err != nil {
-		log.Fatalf("Failed to authenticate with Umami: %v", err)
-	}
+	switch transport {
+	case "http":
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "8080"
+		}
+		srv := &http.Server{
+			Addr:              ":" + port,
+			Handler:           NewHTTPHandler(),
+			ReadHeaderTimeout: 10 * time.Second,
+		}
+		log.Printf("Starting HTTP transport on :%s", port)
+		if err := srv.ListenAndServe(); err != nil {
+			log.Fatalf("HTTP server error: %v", err)
+		}
+	default:
+		config, err := LoadConfig()
+		if err != nil {
+			log.Fatalf("Failed to load config: %v", err)
+		}
 
-	server := NewMCPServer(client)
-	if err := server.Run(); err != nil {
-		log.Fatalf("Server error: %v", err)
+		client := NewUmamiClient(config.UmamiURL, config.Username, config.Password)
+		if err := client.Authenticate(); err != nil {
+			log.Fatalf("Failed to authenticate with Umami: %v", err)
+		}
+
+		server := NewMCPServer(client)
+		if err := server.Run(); err != nil {
+			log.Fatalf("Server error: %v", err)
+		}
 	}
 }
