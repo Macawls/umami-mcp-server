@@ -48,7 +48,7 @@ func (h *HTTPHandler) handlePost(w http.ResponseWriter, r *http.Request) {
 		Method string `json:"method"`
 	}
 	if err := json.Unmarshal(body, &msg); err != nil {
-		writeJSONRPCError(w, nil, &Error{Code: -32700, Message: "Parse error"}, http.StatusOK)
+		writeJSONRPCError(w, nil, &Error{Code: -32700, Message: "Parse error"})
 		return
 	}
 
@@ -59,7 +59,7 @@ func (h *HTTPHandler) handlePost(w http.ResponseWriter, r *http.Request) {
 
 	var req Request
 	if err := json.Unmarshal(body, &req); err != nil {
-		writeJSONRPCError(w, nil, &Error{Code: -32700, Message: "Parse error"}, http.StatusOK)
+		writeJSONRPCError(w, nil, &Error{Code: -32700, Message: "Parse error"})
 		return
 	}
 
@@ -98,7 +98,7 @@ func (h *HTTPHandler) handleInitialize(w http.ResponseWriter, r *http.Request, r
 		writeJSONRPCError(w, req.ID, &Error{
 			Code:    -32602,
 			Message: "Missing required query params: umamiHost, umamiUsername, umamiPassword",
-		}, http.StatusOK)
+		})
 		return
 	}
 
@@ -107,7 +107,7 @@ func (h *HTTPHandler) handleInitialize(w http.ResponseWriter, r *http.Request, r
 		writeJSONRPCError(w, req.ID, &Error{
 			Code:    -32603,
 			Message: fmt.Sprintf("Authentication failed: %v", err),
-		}, http.StatusOK)
+		})
 		return
 	}
 
@@ -146,10 +146,9 @@ func generateSessionID() string {
 	return hex.EncodeToString(b)
 }
 
-func writeJSONRPCError(w http.ResponseWriter, id any, rpcErr *Error, status int) {
+func writeJSONRPCError(w http.ResponseWriter, id any, rpcErr *Error) {
 	resp := Response{JSONRPC: "2.0", ID: id, Error: rpcErr}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
 	data, _ := json.Marshal(resp)
 	_, _ = w.Write(data)
 }
