@@ -134,43 +134,20 @@ func (c *UmamiClient) GetWebsites(includeTeams bool) ([]Website, error) {
 }
 
 type Stats struct {
-	PageViews ValueChange `json:"pageviews"`
-	Visitors  ValueChange `json:"visitors"`
-	Bounces   ValueChange `json:"bounces"`
-	TotalTime ValueChange `json:"totaltime"`
+	PageViews  int              `json:"pageviews"`
+	Visitors   int              `json:"visitors"`
+	Visits     int              `json:"visits"`
+	Bounces    int              `json:"bounces"`
+	TotalTime  int              `json:"totaltime"`
+	Comparison *StatsComparison `json:"comparison,omitempty"`
 }
 
-type ValueChange struct {
-	Value  int `json:"value"`
-	Change int `json:"change"`
-}
-
-func (v *ValueChange) UnmarshalJSON(data []byte) error {
-	trimmed := bytes.TrimSpace(data)
-	if len(trimmed) == 0 || string(trimmed) == "null" {
-		return nil
-	}
-
-	if trimmed[0] == '{' {
-		var object struct {
-			Value  float64 `json:"value"`
-			Change float64 `json:"change"`
-		}
-		if err := json.Unmarshal(trimmed, &object); err != nil {
-			return err
-		}
-		v.Value = int(object.Value)
-		v.Change = int(object.Change)
-		return nil
-	}
-
-	var numeric float64
-	if err := json.Unmarshal(trimmed, &numeric); err != nil {
-		return err
-	}
-	v.Value = int(numeric)
-	v.Change = 0
-	return nil
+type StatsComparison struct {
+	PageViews int `json:"pageviews"`
+	Visitors  int `json:"visitors"`
+	Visits    int `json:"visits"`
+	Bounces   int `json:"bounces"`
+	TotalTime int `json:"totaltime"`
 }
 
 func (c *UmamiClient) GetStats(websiteID, startDate, endDate string) (*Stats, error) {
@@ -230,6 +207,10 @@ type Metric struct {
 }
 
 func (c *UmamiClient) GetMetrics(websiteID, startDate, endDate, metricType string, limit int) ([]Metric, error) {
+	if metricType == "url" {
+		metricType = "path"
+	}
+
 	params := map[string]string{
 		"startAt": startDate,
 		"endAt":   endDate,
@@ -238,15 +219,6 @@ func (c *UmamiClient) GetMetrics(websiteID, startDate, endDate, metricType strin
 	}
 
 	data, err := c.doRequest(fmt.Sprintf("/api/websites/%s/metrics", websiteID), params)
-	if err != nil && metricType == "url" {
-		fallbackParams := map[string]string{
-			"startAt": startDate,
-			"endAt":   endDate,
-			"type":    "path",
-			"limit":   fmt.Sprintf("%d", limit),
-		}
-		data, err = c.doRequest(fmt.Sprintf("/api/websites/%s/metrics", websiteID), fallbackParams)
-	}
 	if err != nil {
 		return nil, err
 	}

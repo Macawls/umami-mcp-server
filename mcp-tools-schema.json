@@ -7,7 +7,7 @@
       "properties": {
         "includeTeams": {
           "type": "boolean",
-          "description": "Include websites from teams the authenticated user belongs to",
+          "description": "Set to true to include websites where the authenticated user is the team owner",
           "default": false
         }
       }
@@ -15,7 +15,7 @@
   },
   {
     "name": "get_stats",
-    "description": "Get aggregated statistics for a website including pageviews, visitors (unique sessions), bounces, and totaltime. IMPORTANT: First check website createdAt date. If requesting 'last X days', verify that X days ago is after createdAt - if not, adjust start_date to createdAt. The 'change' field compares with the previous period of same length. Note: 'visitors' = unique sessions, 'bounces' = single-pageview sessions, 'totaltime' = sum of time between pageviews (excludes bounces).",
+    "description": "Get aggregated statistics for a website including pageviews, visitors, visits, bounces, and totaltime. IMPORTANT: First check website createdAt date. If requesting 'last X days', verify that X days ago is after createdAt - if not, adjust start_date to createdAt. Umami v2 returns flat numeric fields and may include a top-level `comparison` object for previous-period values.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -83,8 +83,8 @@
         },
         "metric_type": {
           "type": "string",
-          "description": "Type of metric to retrieve. 'url' is kept as a backward-compatible alias and may map to 'path' on newer Umami versions.",
-          "enum": ["url", "path", "title", "entry", "exit", "referrer", "browser", "os", "device", "country", "event"]
+          "description": "Type of metric to retrieve. 'url' is kept as a backward-compatible alias and is mapped to 'path' before calling the Umami API.",
+          "enum": ["url", "path", "entry", "exit", "title", "query", "referrer", "channel", "domain", "country", "region", "city", "browser", "os", "device", "language", "screen", "event", "hostname", "tag", "distinctId"]
         },
         "limit": {
           "type": "integer",

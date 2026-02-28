@@ -131,10 +131,18 @@ func TestUmamiClient_GetStats(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{
-			"pageviews": map[string]int{"value": 1000, "change": 50},
-			"visitors":  map[string]int{"value": 200, "change": 10},
-			"bounces":   map[string]int{"value": 150, "change": -5},
-			"totaltime": map[string]int{"value": 50000, "change": 2000},
+			"pageviews": 1000,
+			"visitors":  200,
+			"visits":    180,
+			"bounces":   150,
+			"totaltime": 50000,
+			"comparison": map[string]int{
+				"pageviews": 900,
+				"visitors":  180,
+				"visits":    160,
+				"bounces":   140,
+				"totaltime": 45000,
+			},
 		})
 	}))
 	defer server.Close()
@@ -150,12 +158,16 @@ func TestUmamiClient_GetStats(t *testing.T) {
 		t.Fatalf("GetStats failed: %v", err)
 	}
 
-	if stats.PageViews.Value != 1000 {
-		t.Errorf("Expected 1000 pageviews, got %d", stats.PageViews.Value)
+	if stats.PageViews != 1000 {
+		t.Errorf("Expected 1000 pageviews, got %d", stats.PageViews)
 	}
 
-	if stats.Visitors.Value != 200 {
-		t.Errorf("Expected 200 visitors, got %d", stats.Visitors.Value)
+	if stats.Visitors != 200 {
+		t.Errorf("Expected 200 visitors, got %d", stats.Visitors)
+	}
+
+	if stats.Comparison == nil || stats.Comparison.PageViews != 900 {
+		t.Errorf("Expected comparison pageviews=900, got %+v", stats.Comparison)
 	}
 }
 
@@ -182,8 +194,8 @@ func TestUmamiClient_GetStats_NumericShape(t *testing.T) {
 		t.Fatalf("GetStats failed: %v", err)
 	}
 
-	if stats.PageViews.Value != 1000 || stats.PageViews.Change != 0 {
-		t.Errorf("Expected pageviews value=1000 change=0, got value=%d change=%d", stats.PageViews.Value, stats.PageViews.Change)
+	if stats.PageViews != 1000 {
+		t.Errorf("Expected pageviews=1000, got %d", stats.PageViews)
 	}
 }
 
@@ -194,8 +206,8 @@ func TestUmamiClient_GetMetrics_DirectArray(t *testing.T) {
 		}
 
 		metricType := r.URL.Query().Get("type")
-		if metricType != "url" {
-			t.Errorf("Expected type=url, got %s", metricType)
+		if metricType != "path" {
+			t.Errorf("Expected type=path, got %s", metricType)
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -227,24 +239,16 @@ func TestUmamiClient_GetMetrics_DirectArray(t *testing.T) {
 	}
 }
 
-func TestUmamiClient_GetMetrics_UrlFallbackToPath(t *testing.T) {
+func TestUmamiClient_GetMetrics_UrlMappedToPathBeforeRequest(t *testing.T) {
 	callCount := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
 
 		metricType := r.URL.Query().Get("type")
-		if callCount == 1 {
-			if metricType != "url" {
-				t.Errorf("Expected first call type=url, got %s", metricType)
-			}
-			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(`{"error":"Invalid metric type"}`))
-			return
+		if metricType != "path" {
+			t.Errorf("Expected mapped type=path, got %s", metricType)
 		}
 
-		if metricType != "path" {
-			t.Errorf("Expected fallback call type=path, got %s", metricType)
-		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`[{"x":"/","y":42}]`))
 	}))
@@ -260,11 +264,11 @@ func TestUmamiClient_GetMetrics_UrlFallbackToPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetMetrics failed: %v", err)
 	}
-	if callCount != 2 {
-		t.Fatalf("Expected 2 calls (url + fallback path), got %d", callCount)
+	if callCount != 1 {
+		t.Fatalf("Expected 1 call with mapped type=path, got %d", callCount)
 	}
 	if len(metrics) != 1 || metrics[0].X != "/" || metrics[0].Y != 42 {
-		t.Fatalf("Unexpected fallback metrics: %+v", metrics)
+		t.Fatalf("Unexpected metrics: %+v", metrics)
 	}
 }
 
