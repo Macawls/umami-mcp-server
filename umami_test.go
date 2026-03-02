@@ -75,7 +75,7 @@ func TestUmamiClient_GetWebsites(t *testing.T) {
 		httpClient: &http.Client{},
 	}
 
-	websites, err := client.GetWebsites()
+	websites, err := client.GetWebsites(false)
 	if err != nil {
 		t.Fatalf("GetWebsites failed: %v", err)
 	}
@@ -86,6 +86,51 @@ func TestUmamiClient_GetWebsites(t *testing.T) {
 
 	if websites[0].ID != "test-id-1" {
 		t.Errorf("Expected first website ID test-id-1, got %s", websites[0].ID)
+	}
+}
+
+func TestUmamiClient_GetWebsites_IncludeTeams(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/websites" {
+			t.Errorf("Expected path /api/websites, got %s", r.URL.Path)
+		}
+
+		includeTeams := r.URL.Query().Get("includeTeams")
+		if includeTeams != "true" {
+			t.Errorf("Expected includeTeams=true, got %s", includeTeams)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]any{
+				{
+					"id":        "test-id-1",
+					"name":      "Team Site",
+					"domain":    "team.com",
+					"createdAt": "2025-01-01T00:00:00Z",
+				},
+			},
+		})
+	}))
+	defer server.Close()
+
+	client := &UmamiClient{
+		baseURL:    server.URL,
+		token:      "test-token",
+		httpClient: &http.Client{},
+	}
+
+	websites, err := client.GetWebsites(true)
+	if err != nil {
+		t.Fatalf("GetWebsites with includeTeams failed: %v", err)
+	}
+
+	if len(websites) != 1 {
+		t.Errorf("Expected 1 website, got %d", len(websites))
+	}
+
+	if websites[0].Name != "Team Site" {
+		t.Errorf("Expected website name 'Team Site', got %s", websites[0].Name)
 	}
 }
 
@@ -104,10 +149,18 @@ func TestUmamiClient_GetStats(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{
-			"pageviews": map[string]int{"value": 1000, "change": 50},
-			"visitors":  map[string]int{"value": 200, "change": 10},
-			"bounces":   map[string]int{"value": 150, "change": -5},
-			"totaltime": map[string]int{"value": 50000, "change": 2000},
+			"pageviews": 15171,
+			"visitors":  4415,
+			"visits":    5680,
+			"bounces":   3567,
+			"totaltime": 809968,
+			"comparison": map[string]int{
+				"pageviews": 38675,
+				"visitors":  12000,
+				"visits":    15000,
+				"bounces":   8000,
+				"totaltime": 2000000,
+			},
 		})
 	}))
 	defer server.Close()
@@ -123,12 +176,100 @@ func TestUmamiClient_GetStats(t *testing.T) {
 		t.Fatalf("GetStats failed: %v", err)
 	}
 
-	if stats.PageViews.Value != 1000 {
-		t.Errorf("Expected 1000 pageviews, got %d", stats.PageViews.Value)
+	if stats.PageViews != 15171 {
+		t.Errorf("Expected 15171 pageviews, got %d", stats.PageViews)
 	}
 
-	if stats.Visitors.Value != 200 {
-		t.Errorf("Expected 200 visitors, got %d", stats.Visitors.Value)
+	if stats.Visitors != 4415 {
+		t.Errorf("Expected 4415 visitors, got %d", stats.Visitors)
+	}
+
+	if stats.Visits != 5680 {
+		t.Errorf("Expected 5680 visits, got %d", stats.Visits)
+	}
+
+	if stats.Bounces != 3567 {
+		t.Errorf("Expected 3567 bounces, got %d", stats.Bounces)
+	}
+
+	if stats.TotalTime != 809968 {
+		t.Errorf("Expected 809968 totaltime, got %d", stats.TotalTime)
+	}
+
+	if stats.Comparison == nil {
+		t.Fatal("Expected comparison to be present")
+	}
+
+	if stats.Comparison.PageViews != 38675 {
+		t.Errorf("Expected comparison pageviews 38675, got %d", stats.Comparison.PageViews)
+	}
+}
+
+func TestUmamiClient_GetStats_WithoutComparison(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"pageviews": 100,
+			"visitors":  50,
+			"visits":    60,
+			"bounces":   20,
+			"totaltime": 5000,
+		})
+	}))
+	defer server.Close()
+
+	client := &UmamiClient{
+		baseURL:    server.URL,
+		token:      "test-token",
+		httpClient: &http.Client{},
+	}
+
+	stats, err := client.GetStats("test-website-id", "1234567890", "1234567899")
+	if err != nil {
+		t.Fatalf("GetStats failed: %v", err)
+	}
+
+	if stats.PageViews != 100 {
+		t.Errorf("Expected 100 pageviews, got %d", stats.PageViews)
+	}
+
+	if stats.Comparison != nil {
+		t.Error("Expected comparison to be nil when not present in response")
+	}
+}
+
+func TestUmamiClient_GetMetrics_UrlToPathMapping(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/websites/test-website-id/metrics" {
+			t.Errorf("Expected metrics path, got %s", r.URL.Path)
+		}
+
+		metricType := r.URL.Query().Get("type")
+		if metricType != "path" {
+			t.Errorf("Expected type=path (mapped from url), got %s", metricType)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[
+			{"x": "/blog/post1", "y": 150},
+			{"x": "/about", "y": 80}
+		]`))
+	}))
+	defer server.Close()
+
+	client := &UmamiClient{
+		baseURL:    server.URL,
+		token:      "test-token",
+		httpClient: &http.Client{},
+	}
+
+	metrics, err := client.GetMetrics("test-website-id", "1234567890", "1234567899", "url", 10)
+	if err != nil {
+		t.Fatalf("GetMetrics failed: %v", err)
+	}
+
+	if len(metrics) != 2 {
+		t.Errorf("Expected 2 metrics, got %d", len(metrics))
 	}
 }
 
@@ -139,8 +280,8 @@ func TestUmamiClient_GetMetrics_DirectArray(t *testing.T) {
 		}
 
 		metricType := r.URL.Query().Get("type")
-		if metricType != "url" {
-			t.Errorf("Expected type=url, got %s", metricType)
+		if metricType != "path" {
+			t.Errorf("Expected type=path, got %s", metricType)
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -158,7 +299,7 @@ func TestUmamiClient_GetMetrics_DirectArray(t *testing.T) {
 		httpClient: &http.Client{},
 	}
 
-	metrics, err := client.GetMetrics("test-website-id", "1234567890", "1234567899", "url", 10)
+	metrics, err := client.GetMetrics("test-website-id", "1234567890", "1234567899", "path", 10)
 	if err != nil {
 		t.Fatalf("GetMetrics failed: %v", err)
 	}
@@ -190,7 +331,7 @@ func TestUmamiClient_GetMetrics_WrappedInData(t *testing.T) {
 		httpClient: &http.Client{},
 	}
 
-	metrics, err := client.GetMetrics("test-website-id", "1234567890", "1234567899", "url", 10)
+	metrics, err := client.GetMetrics("test-website-id", "1234567890", "1234567899", "path", 10)
 	if err == nil {
 		t.Error("Expected error for wrapped data format, got nil")
 	}
@@ -315,7 +456,7 @@ func TestUmamiClient_ErrorHandling(t *testing.T) {
 				httpClient: &http.Client{},
 			}
 
-			_, err := client.GetWebsites()
+			_, err := client.GetWebsites(false)
 			if (err != nil) != tt.expectErr {
 				t.Errorf("Expected error=%v, got error=%v", tt.expectErr, err != nil)
 			}

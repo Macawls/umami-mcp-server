@@ -5,8 +5,16 @@ import (
 	"fmt"
 )
 
-func (s *MCPServer) execGetWebsites() (any, *Error) {
-	websites, err := s.client.GetWebsites()
+func (s *MCPServer) execGetWebsites(args json.RawMessage) (any, *Error) {
+	var params struct {
+		IncludeTeams bool `json:"includeTeams"`
+	}
+
+	if len(args) > 0 {
+		_ = json.Unmarshal(args, &params)
+	}
+
+	websites, err := s.client.GetWebsites(params.IncludeTeams)
 	if err != nil {
 		return nil, &Error{Code: -32603, Message: fmt.Sprintf("Failed to get websites: %v", err)}
 	}

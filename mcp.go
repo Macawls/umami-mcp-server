@@ -136,7 +136,7 @@ func (s *MCPServer) processToolCall(rawParams json.RawMessage) (any, *Error) {
 
 	switch params.Name {
 	case "get_websites":
-		return s.execGetWebsites()
+		return s.execGetWebsites(params.Arguments)
 	case "get_stats":
 		return s.execGetStats(params.Arguments)
 	case "get_pageviews":
@@ -170,13 +170,13 @@ var promptTemplates = map[string]string{
 		"covering the last {days} days by calling:\n" +
 		"- get_stats for overall visitor metrics\n" +
 		"- get_pageviews (unit: day) for traffic trends\n" +
-		"- get_metrics for top pages (type: url), referrers (type: referrer), " +
+		"- get_metrics for top pages (type: path), referrers (type: referrer), " +
 		"countries (type: country), browsers (type: browser), " +
 		"and devices (type: device)\n\n" +
 		"Summarize the findings in a clear, well-structured report.",
 
 	"top-pages": "First call get_websites to find the target website. " +
-		"Then call get_metrics with type \"url\" over the last {days} days, " +
+		"Then call get_metrics with type \"path\" over the last {days} days, " +
 		"limited to {limit} results, to find the most visited pages. " +
 		"Present the results as a ranked list with page paths and view counts.",
 
@@ -272,7 +272,7 @@ func (s *MCPServer) processResourcesRead(rawParams json.RawMessage) (any, *Error
 		return nil, &Error{Code: -32602, Message: fmt.Sprintf("Unknown resource: %s", params.URI)}
 	}
 
-	websites, err := s.client.GetWebsites()
+	websites, err := s.client.GetWebsites(false)
 	if err != nil {
 		return nil, &Error{Code: -32603, Message: fmt.Sprintf("Failed to get websites: %v", err)}
 	}

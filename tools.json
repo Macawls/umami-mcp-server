@@ -4,12 +4,18 @@
     "description": "Get list of all websites configured in Umami. Returns website ID, name, domain, and createdAt timestamp. CRITICAL: Always call this FIRST before any analytics queries to (1) verify the website exists, (2) check when it was created, and (3) ensure you don't request data from before the creation date. Analytics data only exists from createdAt onwards.",
     "inputSchema": {
       "type": "object",
-      "properties": {}
+      "properties": {
+        "includeTeams": {
+          "type": "boolean",
+          "description": "Set to true to include websites where you are the team owner. Useful when websites are shared across teams and not visible by default.",
+          "default": false
+        }
+      }
     }
   },
   {
     "name": "get_stats",
-    "description": "Get aggregated statistics for a website including pageviews, visitors (unique sessions), bounces, and totaltime. IMPORTANT: First check website createdAt date. If requesting 'last X days', verify that X days ago is after createdAt - if not, adjust start_date to createdAt. The 'change' field compares with the previous period of same length. Note: 'visitors' = unique sessions, 'bounces' = single-pageview sessions, 'totaltime' = sum of time between pageviews (excludes bounces).",
+    "description": "Get aggregated statistics for a website. Returns flat numeric fields: pageviews, visitors (unique sessions), visits, bounces, and totaltime. May include a 'comparison' object with the same fields representing the previous period of the same length. IMPORTANT: First check website createdAt date. If requesting 'last X days', verify that X days ago is after createdAt - if not, adjust start_date to createdAt. Note: 'visitors' = unique sessions, 'bounces' = single-pageview sessions, 'totaltime' = sum of time between pageviews (excludes bounces).",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -50,7 +56,7 @@
         "unit": {
           "type": "string",
           "description": "Time unit for grouping data. Determines granularity and number of data points returned",
-          "enum": ["hour", "day", "month", "year"],
+          "enum": ["minute", "hour", "day", "month", "year"],
           "default": "day"
         }
       },
@@ -59,7 +65,7 @@
   },
   {
     "name": "get_metrics",
-    "description": "Get metrics for a website. Returns array with 'x' (metric value) and 'y' (count). For 'url': page paths without query params. For 'referrer': traffic sources (empty string = direct). For 'browser/os/device': user agents. For 'country': 2-letter ISO codes. IMPORTANT: Check website createdAt first - requesting data before creation returns empty results.",
+    "description": "Get metrics for a website. Returns array with 'x' (metric value) and 'y' (count). For 'url'/'path': page paths without query params. For 'referrer': traffic sources (empty string = direct). For 'browser/os/device': user agents. For 'country': 2-letter ISO codes. IMPORTANT: Check website createdAt first - requesting data before creation returns empty results.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -77,8 +83,8 @@
         },
         "metric_type": {
           "type": "string",
-          "description": "Type of metric to retrieve. Each returns different data in 'x' field",
-          "enum": ["url", "referrer", "browser", "os", "device", "country", "event"]
+          "description": "Type of metric to retrieve. 'url' is accepted as an alias for 'path'. Each returns different data in 'x' field",
+          "enum": ["url", "path", "referrer", "browser", "os", "device", "country", "region", "city", "language", "screen", "event", "hostname", "domain", "query", "channel", "tag", "distinctId", "title", "entry", "exit"]
         },
         "limit": {
           "type": "integer",

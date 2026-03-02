@@ -112,8 +112,13 @@ type Website struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func (c *UmamiClient) GetWebsites() ([]Website, error) {
-	data, err := c.doRequest("/api/websites", nil)
+func (c *UmamiClient) GetWebsites(includeTeams bool) ([]Website, error) {
+	var params map[string]string
+	if includeTeams {
+		params = map[string]string{"includeTeams": "true"}
+	}
+
+	data, err := c.doRequest("/api/websites", params)
 	if err != nil {
 		return nil, err
 	}
@@ -129,15 +134,20 @@ func (c *UmamiClient) GetWebsites() ([]Website, error) {
 }
 
 type Stats struct {
-	PageViews ValueChange `json:"pageviews"`
-	Visitors  ValueChange `json:"visitors"`
-	Bounces   ValueChange `json:"bounces"`
-	TotalTime ValueChange `json:"totaltime"`
+	PageViews  int              `json:"pageviews"`
+	Visitors   int              `json:"visitors"`
+	Visits     int              `json:"visits"`
+	Bounces    int              `json:"bounces"`
+	TotalTime  int              `json:"totaltime"`
+	Comparison *StatsComparison `json:"comparison,omitempty"`
 }
 
-type ValueChange struct {
-	Value  int `json:"value"`
-	Change int `json:"change"`
+type StatsComparison struct {
+	PageViews int `json:"pageviews"`
+	Visitors  int `json:"visitors"`
+	Visits    int `json:"visits"`
+	Bounces   int `json:"bounces"`
+	TotalTime int `json:"totaltime"`
 }
 
 func (c *UmamiClient) GetStats(websiteID, startDate, endDate string) (*Stats, error) {
@@ -197,6 +207,11 @@ type Metric struct {
 }
 
 func (c *UmamiClient) GetMetrics(websiteID, startDate, endDate, metricType string, limit int) ([]Metric, error) {
+	// Map legacy "url" type to current "path" type (renamed Oct 2025)
+	if metricType == "url" {
+		metricType = "path"
+	}
+
 	params := map[string]string{
 		"startAt": startDate,
 		"endAt":   endDate,
