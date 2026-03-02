@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+const metricTypePath = "path"
+
 type UmamiClient struct {
 	baseURL    string
 	username   string
@@ -209,7 +211,7 @@ type Metric struct {
 func (c *UmamiClient) GetMetrics(websiteID, startDate, endDate, metricType string, limit int) ([]Metric, error) {
 	// Map legacy "url" type to current "path" type (renamed Oct 2025)
 	if metricType == "url" {
-		metricType = "path"
+		metricType = metricTypePath
 	}
 
 	params := map[string]string{
