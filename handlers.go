@@ -39,6 +39,10 @@ func (s *MCPServer) execGetStats(args json.RawMessage) (any, *Error) {
 		return nil, &Error{Code: -32602, Message: "Invalid arguments"}
 	}
 
+	if err := validateWebsiteID(params.WebsiteID); err != nil {
+		return nil, &Error{Code: -32602, Message: "Invalid website_id"}
+	}
+
 	params.StartDate = normalizeDate(params.StartDate)
 	params.EndDate = normalizeDate(params.EndDate)
 
@@ -66,6 +70,10 @@ func (s *MCPServer) execGetPageViews(args json.RawMessage) (any, *Error) {
 
 	if err := json.Unmarshal(args, &params); err != nil {
 		return nil, &Error{Code: -32602, Message: "Invalid arguments"}
+	}
+
+	if err := validateWebsiteID(params.WebsiteID); err != nil {
+		return nil, &Error{Code: -32602, Message: "Invalid website_id"}
 	}
 
 	if params.Unit == "" {
@@ -102,6 +110,10 @@ func (s *MCPServer) execGetMetrics(args json.RawMessage) (any, *Error) {
 		return nil, &Error{Code: -32602, Message: "Invalid arguments"}
 	}
 
+	if err := validateWebsiteID(params.WebsiteID); err != nil {
+		return nil, &Error{Code: -32602, Message: "Invalid website_id"}
+	}
+
 	if params.Limit == 0 {
 		params.Limit = 10
 	}
@@ -132,6 +144,10 @@ func (s *MCPServer) execGetActive(args json.RawMessage) (any, *Error) {
 
 	if err := json.Unmarshal(args, &params); err != nil {
 		return nil, &Error{Code: -32602, Message: "Invalid arguments"}
+	}
+
+	if err := validateWebsiteID(params.WebsiteID); err != nil {
+		return nil, &Error{Code: -32602, Message: "Invalid website_id"}
 	}
 
 	active, err := s.client.GetActive(params.WebsiteID)

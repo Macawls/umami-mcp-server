@@ -22,19 +22,15 @@ func setupTestUmamiServer() *httptest.Server {
 	return httptest.NewServer(mux)
 }
 
-func mcpURL(umamiURL string) string {
-	return "/mcp?umamiHost=" + umamiURL +
-		"&umamiUsername=admin&umamiPassword=pass"
-}
-
 func initializeSession(
 	t *testing.T, handler *HTTPHandler, umamiURL string,
 ) string {
 	t.Helper()
 	body := `{"jsonrpc":"2.0","id":1,"method":"initialize"}`
-	req := httptest.NewRequest(
-		http.MethodPost, mcpURL(umamiURL), strings.NewReader(body),
-	)
+	req := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(body))
+	req.Header.Set("X-Umami-Host", umamiURL)
+	req.Header.Set("X-Umami-Username", "admin")
+	req.Header.Set("X-Umami-Password", "pass")
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 
@@ -53,14 +49,15 @@ func TestHTTP_Initialize(t *testing.T) {
 	umami := setupTestUmamiServer()
 	defer umami.Close()
 
-	handler := NewHTTPHandler()
+	handler := NewHTTPHandler(nil, 0)
 	_ = initializeSession(t, handler, umami.URL)
 
 	w := httptest.NewRecorder()
 	initBody := `{"jsonrpc":"2.0","id":1,"method":"initialize"}`
-	req := httptest.NewRequest(
-		http.MethodPost, mcpURL(umami.URL), strings.NewReader(initBody),
-	)
+	req := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(initBody))
+	req.Header.Set("X-Umami-Host", umami.URL)
+	req.Header.Set("X-Umami-Username", "admin")
+	req.Header.Set("X-Umami-Password", "pass")
 	handler.ServeHTTP(w, req)
 
 	var resp Response
@@ -81,11 +78,46 @@ func TestHTTP_Initialize(t *testing.T) {
 	}
 }
 
+func TestHTTP_InitializeQueryParamFallback(t *testing.T) {
+	umami := setupTestUmamiServer()
+	defer umami.Close()
+
+	handler := NewHTTPHandler(nil, 0)
+	body := `{"jsonrpc":"2.0","id":1,"method":"initialize"}`
+	url := "/mcp?umamiHost=" + umami.URL + "&umamiUsername=admin&umamiPassword=pass"
+	req := httptest.NewRequest(http.MethodPost, url, strings.NewReader(body))
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	if w.Header().Get("Mcp-Session-Id") == "" {
+		t.Fatal("No Mcp-Session-Id in response")
+	}
+}
+
+func TestHTTP_InitializeMissingCredentials(t *testing.T) {
+	handler := NewHTTPHandler(nil, 0)
+	body := `{"jsonrpc":"2.0","id":1,"method":"initialize"}`
+	req := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(body))
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	var resp Response
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+	if resp.Error == nil || resp.Error.Code != -32602 {
+		t.Errorf("Expected -32602 error, got: %v", resp.Error)
+	}
+}
+
 func TestHTTP_ToolsList(t *testing.T) {
 	umami := setupTestUmamiServer()
 	defer umami.Close()
 
-	handler := NewHTTPHandler()
+	handler := NewHTTPHandler(nil, 0)
 	sessionID := initializeSession(t, handler, umami.URL)
 
 	body := `{"jsonrpc":"2.0","id":2,"method":"tools/list"}`
@@ -110,7 +142,7 @@ func TestHTTP_ToolsList(t *testing.T) {
 }
 
 func TestHTTP_Notification(t *testing.T) {
-	handler := NewHTTPHandler()
+	handler := NewHTTPHandler(nil, 0)
 	body := `{"jsonrpc":"2.0","method":"notifications/initialized"}`
 	req := httptest.NewRequest(
 		http.MethodPost, "/mcp", strings.NewReader(body),
@@ -124,7 +156,7 @@ func TestHTTP_Notification(t *testing.T) {
 }
 
 func TestHTTP_MissingSessionHeader(t *testing.T) {
-	handler := NewHTTPHandler()
+	handler := NewHTTPHandler(nil, 0)
 	body := `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`
 	req := httptest.NewRequest(
 		http.MethodPost, "/mcp", strings.NewReader(body),
@@ -141,7 +173,7 @@ func TestHTTP_DeleteSession(t *testing.T) {
 	umami := setupTestUmamiServer()
 	defer umami.Close()
 
-	handler := NewHTTPHandler()
+	handler := NewHTTPHandler(nil, 0)
 	sessionID := initializeSession(t, handler, umami.URL)
 
 	req := httptest.NewRequest(http.MethodDelete, "/mcp", http.NoBody)
@@ -167,7 +199,7 @@ func TestHTTP_DeleteSession(t *testing.T) {
 }
 
 func TestHTTP_OptionsPreflight(t *testing.T) {
-	handler := NewHTTPHandler()
+	handler := NewHTTPHandler(nil, 0)
 	req := httptest.NewRequest(http.MethodOptions, "/mcp", http.NoBody)
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
@@ -184,7 +216,7 @@ func TestHTTP_OptionsPreflight(t *testing.T) {
 }
 
 func TestHTTP_ServerCard(t *testing.T) {
-	handler := NewHTTPHandler()
+	handler := NewHTTPHandler(nil, 0)
 	req := httptest.NewRequest(http.MethodGet, "/.well-known/mcp/server-card.json", http.NoBody)
 	w := httptest.NewRecorder()
 	handler.handleServerCard(w, req)
@@ -225,12 +257,124 @@ func TestHTTP_ServerCard(t *testing.T) {
 }
 
 func TestHTTP_GetMethodNotAllowed(t *testing.T) {
-	handler := NewHTTPHandler()
+	handler := NewHTTPHandler(nil, 0)
 	req := httptest.NewRequest(http.MethodGet, "/mcp", http.NoBody)
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 
 	if w.Code != http.StatusMethodNotAllowed {
 		t.Errorf("Expected 405, got %d", w.Code)
+	}
+}
+
+func TestHTTP_BodyTooLarge(t *testing.T) {
+	handler := NewHTTPHandler(nil, 0)
+	largeBody := strings.Repeat("x", maxBodySize+1)
+	req := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(largeBody))
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusRequestEntityTooLarge {
+		t.Errorf("Expected 413, got %d", w.Code)
+	}
+}
+
+func TestHTTP_CORSAllowedOrigins(t *testing.T) {
+	handler := NewHTTPHandler([]string{"https://claude.ai", "https://example.com"}, 0)
+
+	req := httptest.NewRequest(http.MethodOptions, "/mcp", http.NoBody)
+	req.Header.Set("Origin", "https://claude.ai")
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://claude.ai" {
+		t.Errorf("Expected origin https://claude.ai, got %q", got)
+	}
+	if w.Header().Get("Vary") != "Origin" {
+		t.Error("Expected Vary: Origin header")
+	}
+
+	req2 := httptest.NewRequest(http.MethodOptions, "/mcp", http.NoBody)
+	req2.Header.Set("Origin", "https://evil.com")
+	w2 := httptest.NewRecorder()
+	handler.ServeHTTP(w2, req2)
+
+	if got := w2.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Errorf("Expected no Access-Control-Allow-Origin for disallowed origin, got %q", got)
+	}
+}
+
+func TestHTTP_SessionLimit(t *testing.T) {
+	umami := setupTestUmamiServer()
+	defer umami.Close()
+
+	handler := NewHTTPHandler(nil, 2)
+
+	_ = initializeSession(t, handler, umami.URL)
+	_ = initializeSession(t, handler, umami.URL)
+
+	body := `{"jsonrpc":"2.0","id":1,"method":"initialize"}`
+	req := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(body))
+	req.Header.Set("X-Umami-Host", umami.URL)
+	req.Header.Set("X-Umami-Username", "admin")
+	req.Header.Set("X-Umami-Password", "pass")
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	var resp Response
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+	if resp.Error == nil || resp.Error.Code != -32603 {
+		t.Errorf("Expected -32603 error for session limit, got: %v", resp.Error)
+	}
+}
+
+func TestHTTP_SessionLimitAfterDelete(t *testing.T) {
+	umami := setupTestUmamiServer()
+	defer umami.Close()
+
+	handler := NewHTTPHandler(nil, 2)
+
+	sessionID := initializeSession(t, handler, umami.URL)
+	_ = initializeSession(t, handler, umami.URL)
+
+	req := httptest.NewRequest(http.MethodDelete, "/mcp", http.NoBody)
+	req.Header.Set("Mcp-Session-Id", sessionID)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("Delete returned %d", w.Code)
+	}
+
+	newSessionID := initializeSession(t, handler, umami.URL)
+	if newSessionID == "" {
+		t.Error("Should be able to create session after deleting one")
+	}
+}
+
+func TestParseOrigins(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []string
+	}{
+		{"", nil},
+		{"https://claude.ai", []string{"https://claude.ai"}},
+		{"https://a.com, https://b.com", []string{"https://a.com", "https://b.com"}},
+		{" https://a.com , , https://b.com ", []string{"https://a.com", "https://b.com"}},
+	}
+
+	for _, tt := range tests {
+		result := parseOrigins(tt.input)
+		if len(result) != len(tt.expected) {
+			t.Errorf("parseOrigins(%q) = %v, want %v", tt.input, result, tt.expected)
+			continue
+		}
+		for i := range result {
+			if result[i] != tt.expected[i] {
+				t.Errorf("parseOrigins(%q)[%d] = %q, want %q", tt.input, i, result[i], tt.expected[i])
+			}
+		}
 	}
 }
