@@ -43,6 +43,9 @@ func (s *MCPServer) execGetStats(args json.RawMessage) (any, *Error) {
 		return nil, &Error{Code: -32602, Message: "Invalid website_id"}
 	}
 
+	params.StartDate = normalizeDate(params.StartDate)
+	params.EndDate = normalizeDate(params.EndDate)
+
 	stats, err := s.client.GetStats(params.WebsiteID, params.StartDate, params.EndDate)
 	if err != nil {
 		return nil, &Error{Code: -32603, Message: fmt.Sprintf("Failed to get stats: %v", err)}
@@ -76,6 +79,9 @@ func (s *MCPServer) execGetPageViews(args json.RawMessage) (any, *Error) {
 	if params.Unit == "" {
 		params.Unit = "day"
 	}
+
+	params.StartDate = normalizeDate(params.StartDate)
+	params.EndDate = normalizeDate(params.EndDate)
 
 	pageviews, err := s.client.GetPageViews(params.WebsiteID, params.StartDate, params.EndDate, params.Unit)
 	if err != nil {
@@ -111,6 +117,9 @@ func (s *MCPServer) execGetMetrics(args json.RawMessage) (any, *Error) {
 	if params.Limit == 0 {
 		params.Limit = 10
 	}
+
+	params.StartDate = normalizeDate(params.StartDate)
+	params.EndDate = normalizeDate(params.EndDate)
 
 	metrics, err := s.client.GetMetrics(
 		params.WebsiteID, params.StartDate, params.EndDate, params.MetricType, params.Limit,

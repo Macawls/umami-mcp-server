@@ -25,11 +25,11 @@
         },
         "start_date": {
           "type": "string",
-          "description": "Start date as Unix timestamp in milliseconds (13 digits). MUST be after website createdAt. For 'last X days': current_time_ms - (X * 86400000). Example: last 7 days = now - 604800000"
+          "description": "Start date. Accepts ISO 8601 date strings (e.g. '2026-03-23' or '2026-03-23T00:00:00Z') or Unix timestamps in milliseconds (13 digits). ISO dates are RECOMMENDED to avoid calculation errors. MUST be after website createdAt."
         },
         "end_date": {
           "type": "string",
-          "description": "End date as Unix timestamp in milliseconds (13 digits). Typically current timestamp. Must be after start_date"
+          "description": "End date. Accepts ISO 8601 date strings (e.g. '2026-03-23' or '2026-03-23T23:59:59Z') or Unix timestamps in milliseconds. ISO dates are RECOMMENDED. Must be after start_date."
         }
       },
       "required": ["website_id", "start_date", "end_date"]
@@ -47,11 +47,11 @@
         },
         "start_date": {
           "type": "string",
-          "description": "Start date as Unix timestamp in milliseconds (13 digits). MUST be after website createdAt date"
+          "description": "Start date. Accepts ISO 8601 date strings (e.g. '2026-03-23') or Unix timestamps in milliseconds. ISO dates are RECOMMENDED. MUST be after website createdAt."
         },
         "end_date": {
           "type": "string",
-          "description": "End date as Unix timestamp in milliseconds (13 digits). Must be after start_date"
+          "description": "End date. Accepts ISO 8601 date strings (e.g. '2026-03-23') or Unix timestamps in milliseconds. ISO dates are RECOMMENDED. Must be after start_date."
         },
         "unit": {
           "type": "string",
@@ -75,11 +75,11 @@
         },
         "start_date": {
           "type": "string",
-          "description": "Start date as Unix timestamp in milliseconds (13 digits). MUST be after website createdAt"
+          "description": "Start date. Accepts ISO 8601 date strings (e.g. '2026-03-23') or Unix timestamps in milliseconds. ISO dates are RECOMMENDED. MUST be after website createdAt."
         },
         "end_date": {
           "type": "string",
-          "description": "End date as Unix timestamp in milliseconds (13 digits). Must be after start_date"
+          "description": "End date. Accepts ISO 8601 date strings (e.g. '2026-03-23') or Unix timestamps in milliseconds. ISO dates are RECOMMENDED. Must be after start_date."
         },
         "metric_type": {
           "type": "string",
