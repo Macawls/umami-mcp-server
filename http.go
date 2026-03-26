@@ -8,29 +8,54 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
+	"sync/atomic"
 )
+
+const maxBodySize = 1 << 20 // 1 MB
 
 type session struct {
 	server *MCPServer
 }
 
 type HTTPHandler struct {
-	sessions sync.Map // map[string]*session
+	sessions       sync.Map
+	sessionCount   atomic.Int64
+	maxSessions    int
+	allowedOrigins []string
 }
 
-func NewHTTPHandler() *HTTPHandler {
-	return &HTTPHandler{}
+func NewHTTPHandler(allowedOrigins []string, maxSessions int) *HTTPHandler {
+	if maxSessions <= 0 {
+		maxSessions = 1000
+	}
+	return &HTTPHandler{
+		allowedOrigins: allowedOrigins,
+		maxSessions:    maxSessions,
+	}
 }
 
-func setCORS(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Mcp-Session-Id")
+func (h *HTTPHandler) setCORS(w http.ResponseWriter, r *http.Request) {
+	if len(h.allowedOrigins) == 0 {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+	} else {
+		origin := r.Header.Get("Origin")
+		for _, allowed := range h.allowedOrigins {
+			if allowed == origin {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Vary", "Origin")
+				break
+			}
+		}
+	}
+	w.Header().Set("Access-Control-Allow-Headers",
+		"Content-Type, Authorization, Mcp-Session-Id, X-Umami-Host, X-Umami-Username, X-Umami-Password")
 	w.Header().Set("Access-Control-Expose-Headers", "Mcp-Session-Id")
 }
 
 func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	setCORS(w)
+	h.setCORS(w, r)
 
 	switch r.Method {
 	case http.MethodOptions:
@@ -47,9 +72,13 @@ func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) handlePost(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+	body, err := io.ReadAll(io.LimitReader(r.Body, maxBodySize+1))
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	if len(body) > maxBodySize {
+		http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
 		return
 	}
 
@@ -99,15 +128,33 @@ func (h *HTTPHandler) handlePost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) handleInitialize(w http.ResponseWriter, r *http.Request, req Request) {
-	query := r.URL.Query()
-	umamiHost := query.Get("umamiHost")
-	umamiUsername := query.Get("umamiUsername")
-	umamiPassword := query.Get("umamiPassword")
+	umamiHost := r.Header.Get("X-Umami-Host")
+	umamiUsername := r.Header.Get("X-Umami-Username")
+	umamiPassword := r.Header.Get("X-Umami-Password")
+
+	if umamiHost == "" || umamiUsername == "" || umamiPassword == "" {
+		query := r.URL.Query()
+		umamiHost = query.Get("umamiHost")
+		umamiUsername = query.Get("umamiUsername")
+		umamiPassword = query.Get("umamiPassword")
+
+		if umamiHost != "" || umamiUsername != "" || umamiPassword != "" {
+			log.Printf("DEPRECATED: credentials in query params — use X-Umami-* headers instead")
+		}
+	}
 
 	if umamiHost == "" || umamiUsername == "" || umamiPassword == "" {
 		writeJSONRPCError(w, req.ID, &Error{
 			Code:    -32602,
-			Message: "Missing required query params: umamiHost, umamiUsername, umamiPassword",
+			Message: "Missing required credentials: provide X-Umami-Host, X-Umami-Username, X-Umami-Password headers",
+		})
+		return
+	}
+
+	if int(h.sessionCount.Load()) >= h.maxSessions {
+		writeJSONRPCError(w, req.ID, &Error{
+			Code:    -32603,
+			Message: "Maximum sessions reached",
 		})
 		return
 	}
@@ -124,6 +171,7 @@ func (h *HTTPHandler) handleInitialize(w http.ResponseWriter, r *http.Request, r
 	sessionID := generateSessionID()
 	srv := NewMCPServer(client)
 	h.sessions.Store(sessionID, &session{server: srv})
+	h.sessionCount.Add(1)
 
 	resp := srv.HandleRequest(req)
 
@@ -147,6 +195,7 @@ func (h *HTTPHandler) handleDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.sessionCount.Add(-1)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -193,4 +242,18 @@ func writeJSONRPCError(w http.ResponseWriter, id any, rpcErr *Error) {
 	w.Header().Set("Content-Type", "application/json")
 	data, _ := json.Marshal(resp)
 	_, _ = w.Write(data)
+}
+
+func parseOrigins(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	origins := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if trimmed := strings.TrimSpace(p); trimmed != "" {
+			origins = append(origins, trimmed)
+		}
+	}
+	return origins
 }
