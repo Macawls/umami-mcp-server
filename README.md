@@ -30,7 +30,7 @@ Connect your Umami Analytics to any MCP client - Claude Desktop, VS Code, Cursor
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@Macawls/umami-mcp-server/badge" />
 </a>
 
-<img src=".github/workflows/insights.PNG" height="500">
+<img src="https://raw.githubusercontent.com/Macawls/umami-mcp-server/main/.github/workflows/insights.PNG" height="500">
 
 
 
@@ -304,6 +304,74 @@ Add to `.vscode/mcp.json` with credentials in headers:
         "X-Umami-Host": "https://your-instance.com",
         "X-Umami-Username": "${input:umami-username}",
         "X-Umami-Password": "${input:umami-password}"
+      }
+    }
+  }
+}
+```
+
+### Claude Code
+
+```bash
+claude mcp add --transport http \
+  --header "X-Umami-Host: https://your-instance.com" \
+  --header "X-Umami-Username: admin" \
+  --header "X-Umami-Password: pass" \
+  umami https://umami-mcp.macawls.dev/mcp
+```
+
+### Cursor
+
+Add to `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "umami": {
+      "url": "https://umami-mcp.macawls.dev/mcp",
+      "headers": {
+        "X-Umami-Host": "https://your-instance.com",
+        "X-Umami-Username": "admin",
+        "X-Umami-Password": "pass"
+      }
+    }
+  }
+}
+```
+
+### Windsurf
+
+Add to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "umami": {
+      "serverUrl": "https://umami-mcp.macawls.dev/mcp",
+      "headers": {
+        "X-Umami-Host": "https://your-instance.com",
+        "X-Umami-Username": "admin",
+        "X-Umami-Password": "pass"
+      }
+    }
+  }
+}
+```
+
+### OpenCode
+
+Add to `opencode.json`:
+
+```json
+{
+  "mcp": {
+    "umami": {
+      "type": "remote",
+      "url": "https://umami-mcp.macawls.dev/mcp",
+      "headers": {
+        "X-Umami-Host": "https://your-instance.com",
+        "X-Umami-Username": "admin",
+        "X-Umami-Password": "pass"
       }
     }
   }
