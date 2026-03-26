@@ -3,7 +3,7 @@ package main
 import "fmt"
 
 func validateWebsiteID(id string) error {
-	if len(id) == 0 || len(id) > 36 {
+	if id == "" || len(id) > 36 {
 		return fmt.Errorf("invalid website ID")
 	}
 	for _, c := range id {

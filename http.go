@@ -49,7 +49,8 @@ func (h *HTTPHandler) setCORS(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Mcp-Session-Id, X-Umami-Host, X-Umami-Username, X-Umami-Password")
+	w.Header().Set("Access-Control-Allow-Headers",
+		"Content-Type, Authorization, Mcp-Session-Id, X-Umami-Host, X-Umami-Username, X-Umami-Password")
 	w.Header().Set("Access-Control-Expose-Headers", "Mcp-Session-Id")
 }
 
