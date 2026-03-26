@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -51,7 +52,12 @@ func main() {
 		if port == "" {
 			port = "8080"
 		}
-		handler := NewHTTPHandler()
+		origins := parseOrigins(os.Getenv("ALLOWED_ORIGINS"))
+		maxSessions := 0
+		if v := os.Getenv("MAX_SESSIONS"); v != "" {
+			maxSessions, _ = strconv.Atoi(v)
+		}
+		handler := NewHTTPHandler(origins, maxSessions)
 		mux := http.NewServeMux()
 		mux.Handle("/mcp", handler)
 		mux.HandleFunc("/.well-known/mcp/server-card.json", handler.handleServerCard)

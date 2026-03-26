@@ -273,15 +273,11 @@ All use similar JSON format as above. Docker and secure prompts work the same wa
 
 A hosted instance is available at `https://umami-mcp.macawls.dev/mcp`. You can connect to it directly from any MCP client that supports HTTP transport — no binary or Docker needed.
 
-Credentials are passed as query parameters:
-
-```
-https://umami-mcp.macawls.dev/mcp?umamiHost=https://your-instance.com&umamiUsername=admin&umamiPassword=pass
-```
+Credentials are passed via `X-Umami-*` headers on the `initialize` request. Query parameters are also supported as a fallback but deprecated.
 
 ### Claude Desktop
 
-Add to your config with `type: "url"`:
+Claude Desktop does not support custom headers, so credentials are passed as query parameters:
 
 ```json
 {
@@ -296,14 +292,19 @@ Add to your config with `type: "url"`:
 
 ### VS Code (GitHub Copilot)
 
-Add to `.vscode/mcp.json`:
+Add to `.vscode/mcp.json` with credentials in headers:
 
 ```json
 {
   "servers": {
     "umami": {
       "type": "http",
-      "url": "https://umami-mcp.macawls.dev/mcp?umamiHost=https://your-instance.com&umamiUsername=admin&umamiPassword=pass"
+      "url": "https://umami-mcp.macawls.dev/mcp",
+      "headers": {
+        "X-Umami-Host": "https://your-instance.com",
+        "X-Umami-Username": "${input:umami-username}",
+        "X-Umami-Password": "${input:umami-password}"
+      }
     }
   }
 }
@@ -311,7 +312,7 @@ Add to `.vscode/mcp.json`:
 
 ### Other Clients
 
-Any MCP client that supports Streamable HTTP can connect using the URL above.
+Any MCP client that supports Streamable HTTP can connect to `https://umami-mcp.macawls.dev/mcp` with credentials in `X-Umami-Host`, `X-Umami-Username`, and `X-Umami-Password` headers.
 
 ## Transport Modes
 
@@ -329,15 +330,27 @@ The server exposes a `/mcp` endpoint that speaks Streamable HTTP. Use this for s
 TRANSPORT=http PORT=9999 ./umami-mcp-server
 ```
 
-Credentials are passed as query parameters on the `initialize` request:
+Credentials are passed via `X-Umami-*` headers on the `initialize` request:
 
 ```bash
-curl -X POST "http://localhost:9999/mcp?umamiHost=https://analytics.example.com&umamiUsername=admin&umamiPassword=pass" \
+curl -X POST "http://localhost:9999/mcp" \
   -H "Content-Type: application/json" \
+  -H "X-Umami-Host: https://analytics.example.com" \
+  -H "X-Umami-Username: admin" \
+  -H "X-Umami-Password: pass" \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize"}'
 ```
 
 The response includes a `Mcp-Session-Id` header to use for subsequent requests.
+
+#### Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `TRANSPORT` | `stdio` | Transport mode (`stdio` or `http`) |
+| `PORT` | `8080` | HTTP server port |
+| `ALLOWED_ORIGINS` | `*` | Comma-separated CORS allowed origins |
+| `MAX_SESSIONS` | `1000` | Maximum concurrent HTTP sessions |
 
 ### Docker
 
