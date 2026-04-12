@@ -12,6 +12,7 @@ type Config struct {
 	UmamiURL string `yaml:"umami_url"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
+	TeamID   string `yaml:"team_id"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -37,6 +38,9 @@ func LoadConfig() (*Config, error) {
 	}
 	if password := os.Getenv("UMAMI_PASSWORD"); password != "" {
 		config.Password = password
+	}
+	if teamID := os.Getenv("UMAMI_TEAM_ID"); teamID != "" {
+		config.TeamID = teamID
 	}
 
 	if config.UmamiURL == "" || config.Username == "" || config.Password == "" {

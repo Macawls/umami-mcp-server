@@ -160,6 +160,9 @@ func (h *HTTPHandler) handleInitialize(w http.ResponseWriter, r *http.Request, r
 	}
 
 	client := NewUmamiClient(umamiHost, umamiUsername, umamiPassword)
+	if teamID := r.Header.Get("X-Umami-Team-Id"); teamID != "" {
+		client.teamID = teamID
+	}
 	if err := client.Authenticate(); err != nil {
 		writeJSONRPCError(w, req.ID, &Error{
 			Code:    -32603,

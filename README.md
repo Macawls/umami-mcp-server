@@ -419,6 +419,7 @@ The response includes a `Mcp-Session-Id` header to use for subsequent requests.
 | `PORT` | `8080` | HTTP server port |
 | `ALLOWED_ORIGINS` | `*` | Comma-separated CORS allowed origins |
 | `MAX_SESSIONS` | `1000` | Maximum concurrent HTTP sessions |
+| `UMAMI_TEAM_ID` | | Team ID for team-based Umami setups (see [Team Websites](#team-websites)) |
 
 ### Docker
 
@@ -439,6 +440,30 @@ docker run -i --rm \
   ghcr.io/macawls/umami-mcp-server
 ```
 
+## Team Websites
+
+If your Umami instance uses teams and your websites are assigned to a team rather than individual users, `get_websites` may return an empty list. Set the `UMAMI_TEAM_ID` environment variable to fetch websites from your team instead:
+
+```json
+{
+  "mcpServers": {
+    "umami": {
+      "command": "~/go/bin/umami-mcp-server",
+      "env": {
+        "UMAMI_URL": "https://your-umami-instance.com",
+        "UMAMI_USERNAME": "your-username",
+        "UMAMI_PASSWORD": "your-password",
+        "UMAMI_TEAM_ID": "your-team-id"
+      }
+    }
+  }
+}
+```
+
+For HTTP transport, pass the team ID via the `X-Umami-Team-Id` header.
+
+You can find your team ID in your Umami dashboard under **Settings → Teams**.
+
 ## Alternative Configuration
 
 Instead of environment variables, create a `config.yaml` file next to the binary:
@@ -447,6 +472,7 @@ Instead of environment variables, create a `config.yaml` file next to the binary
 umami_url: https://your-umami-instance.com
 username: your-username
 password: your-password
+team_id: your-team-id  # optional, for team-based setups
 ```
 
 Environment variables take priority over the config file.

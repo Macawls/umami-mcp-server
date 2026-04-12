@@ -134,6 +134,51 @@ func TestUmamiClient_GetWebsites_IncludeTeams(t *testing.T) {
 	}
 }
 
+func TestUmamiClient_GetWebsites_TeamID(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/teams/my-team-123/websites" {
+			t.Errorf("Expected path /api/teams/my-team-123/websites, got %s", r.URL.Path)
+		}
+
+		if r.URL.Query().Get("includeTeams") != "" {
+			t.Errorf("Expected no includeTeams param when teamID is set")
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]any{
+				{
+					"id":        "team-site-1",
+					"name":      "Team Website",
+					"domain":    "team.example.com",
+					"createdAt": "2025-01-01T00:00:00Z",
+				},
+			},
+		})
+	}))
+	defer server.Close()
+
+	client := &UmamiClient{
+		baseURL:    server.URL,
+		token:      "test-token",
+		teamID:     "my-team-123",
+		httpClient: &http.Client{},
+	}
+
+	websites, err := client.GetWebsites(true)
+	if err != nil {
+		t.Fatalf("GetWebsites with teamID failed: %v", err)
+	}
+
+	if len(websites) != 1 {
+		t.Errorf("Expected 1 website, got %d", len(websites))
+	}
+
+	if websites[0].ID != "team-site-1" {
+		t.Errorf("Expected website ID 'team-site-1', got %s", websites[0].ID)
+	}
+}
+
 func TestUmamiClient_GetStats(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/websites/test-website-id/stats" {

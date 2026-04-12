@@ -80,6 +80,7 @@ func main() {
 		}
 
 		client := NewUmamiClient(config.UmamiURL, config.Username, config.Password)
+		client.teamID = config.TeamID
 		if err := client.Authenticate(); err != nil {
 			log.Fatalf("Failed to authenticate with Umami: %v", err)
 		}

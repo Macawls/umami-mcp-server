@@ -47,3 +47,34 @@ func TestLoadConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestLoadConfig_TeamID(t *testing.T) {
+	t.Setenv("UMAMI_URL", "https://test.com")
+	t.Setenv("UMAMI_USERNAME", "user")
+	t.Setenv("UMAMI_PASSWORD", "pass")
+	t.Setenv("UMAMI_TEAM_ID", "my-team-123")
+
+	config, err := LoadConfig()
+	if err != nil {
+		t.Fatalf("LoadConfig() unexpected error: %v", err)
+	}
+
+	if config.TeamID != "my-team-123" {
+		t.Errorf("Expected TeamID 'my-team-123', got '%s'", config.TeamID)
+	}
+}
+
+func TestLoadConfig_TeamIDOptional(t *testing.T) {
+	t.Setenv("UMAMI_URL", "https://test.com")
+	t.Setenv("UMAMI_USERNAME", "user")
+	t.Setenv("UMAMI_PASSWORD", "pass")
+
+	config, err := LoadConfig()
+	if err != nil {
+		t.Fatalf("LoadConfig() unexpected error: %v", err)
+	}
+
+	if config.TeamID != "" {
+		t.Errorf("Expected empty TeamID, got '%s'", config.TeamID)
+	}
+}

@@ -18,6 +18,7 @@ type UmamiClient struct {
 	username   string
 	password   string
 	token      string
+	teamID     string
 	httpClient *http.Client
 }
 
@@ -115,12 +116,19 @@ type Website struct {
 }
 
 func (c *UmamiClient) GetWebsites(includeTeams bool) ([]Website, error) {
+	var endpoint string
 	var params map[string]string
-	if includeTeams {
-		params = map[string]string{"includeTeams": "true"}
+
+	if c.teamID != "" {
+		endpoint = fmt.Sprintf("/api/teams/%s/websites", c.teamID)
+	} else {
+		endpoint = "/api/websites"
+		if includeTeams {
+			params = map[string]string{"includeTeams": "true"}
+		}
 	}
 
-	data, err := c.doRequest("/api/websites", params)
+	data, err := c.doRequest(endpoint, params)
 	if err != nil {
 		return nil, err
 	}
