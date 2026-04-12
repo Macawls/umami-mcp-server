@@ -79,62 +79,32 @@ docker run -i --rm \
 
 ```bash
 go install github.com/Macawls/umami-mcp-server@latest
-# Or specific version
-go install github.com/Macawls/umami-mcp-server@v1.0.3
 ```
 
 Installs to `~/go/bin/umami-mcp-server` (or `$GOPATH/bin`)
 
-## Configure Your MCP Client
+## Setup
 
-### Claude Desktop
+Pick **one** of the two approaches below based on your preference.
 
-Add to your Claude Desktop config:
+### Remote (No Install)
 
-**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`  
-**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`  
-**Linux:** `~/.config/Claude/claude_desktop_config.json`
+A hosted instance is available at `https://umami-mcp.macawls.dev/mcp`. Connect directly from any MCP client that supports HTTP transport — no binary or Docker needed.
 
-```json
-{
-  "mcpServers": {
-    "umami": {
-      "command": "~/go/bin/umami-mcp-server",
-      "env": {
-        "UMAMI_URL": "https://your-umami-instance.com",
-        "UMAMI_USERNAME": "your-username",
-        "UMAMI_PASSWORD": "your-password"
-      }
-    }
-  }
-}
-```
+Credentials are passed via `X-Umami-*` headers on the `initialize` request.
 
 <details>
-<summary>Docker version</summary>
+<summary><strong>Claude Desktop</strong></summary>
+
+Add to your config (`%APPDATA%\Claude\claude_desktop_config.json` on Windows, `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
 
 ```json
 {
   "mcpServers": {
     "umami": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-e",
-        "UMAMI_URL",
-        "-e",
-        "UMAMI_USERNAME",
-        "-e",
-        "UMAMI_PASSWORD",
-        "ghcr.io/macawls/umami-mcp-server"
-      ],
-      "env": {
-        "UMAMI_URL": "https://your-umami-instance.com",
-        "UMAMI_USERNAME": "your-username",
-        "UMAMI_PASSWORD": "your-password"
-      }
+      "type": "http",
+      "url": "https://umami-mcp.macawls.dev/mcp",
+      "headersHelper": "echo X-Umami-Host: https://your-instance.com && echo X-Umami-Username: admin && echo X-Umami-Password: pass"
     }
   }
 }
@@ -143,156 +113,9 @@ Add to your Claude Desktop config:
 </details>
 
 <details>
-<summary>Secure prompts</summary>
+<summary><strong>VS Code (GitHub Copilot)</strong></summary>
 
-```json
-{
-  "mcpServers": {
-    "umami": {
-      "command": "~/go/bin/umami-mcp-server",
-      "env": {
-        "UMAMI_URL": "${input:umami_url}",
-        "UMAMI_USERNAME": "${input:umami_username}",
-        "UMAMI_PASSWORD": "${input:umami_password}"
-      }
-    }
-  },
-  "inputs": [
-    {
-      "type": "promptString",
-      "id": "umami_url",
-      "description": "Umami instance URL"
-    },
-    {
-      "type": "promptString",
-      "id": "umami_username",
-      "description": "Umami username"
-    },
-    {
-      "type": "promptString",
-      "id": "umami_password",
-      "description": "Umami password",
-      "password": true
-    }
-  ]
-}
-```
-
-</details>
-
-Restart Claude Desktop to load the server.
-
-### VS Code (GitHub Copilot)
-
-Enable agent mode and add MCP servers to access Umami from Copilot.
-
-**For workspace:** Create `.vscode/mcp.json`
-
-```json
-{
-  "servers": {
-    "umami": {
-      "command": "~/go/bin/umami-mcp-server",
-      "env": {
-        "UMAMI_URL": "https://your-umami-instance.com",
-        "UMAMI_USERNAME": "your-username",
-        "UMAMI_PASSWORD": "your-password"
-      }
-    }
-  }
-}
-```
-
-<details>
-<summary>With secure prompts</summary>
-
-```json
-{
-  "inputs": [
-    {
-      "type": "promptString",
-      "id": "umami_url",
-      "description": "Umami instance URL"
-    },
-    {
-      "type": "promptString",
-      "id": "umami_username",
-      "description": "Umami username"
-    },
-    {
-      "type": "promptString",
-      "id": "umami_password",
-      "description": "Umami password",
-      "password": true
-    }
-  ],
-  "servers": {
-    "umami": {
-      "command": "~/go/bin/umami-mcp-server",
-      "env": {
-        "UMAMI_URL": "${input:umami_url}",
-        "UMAMI_USERNAME": "${input:umami_username}",
-        "UMAMI_PASSWORD": "${input:umami_password}"
-      }
-    }
-  }
-}
-```
-
-</details>
-
-Access via: Chat view → Agent mode → Tools button
-
-### Other MCP Clients
-
-<details>
-<summary>Cursor, Windsurf, Zed, Cline</summary>
-
-**Cursor:** `Ctrl/Cmd + Shift + P` → "Cursor Settings" → MCP section
-
-**Windsurf:** Settings → MCP Settings → Add MCP Server  
-Config location: `%APPDATA%\windsurf\mcp_settings.json` (Windows)
-
-**Zed:** Settings → `assistant.mcp_servers`
-
-**Cline:** VS Code Settings → Extensions → Cline → MCP Servers
-
-All use similar JSON format as above. Docker and secure prompts work the same way.
-
-</details>
-
-## Available Tools
-
-- **get_websites** - List all your websites
-- **get_stats** - Get visitor statistics
-- **get_pageviews** - View page traffic over time
-- **get_metrics** - See browsers, countries, devices, and more
-- **get_active** - Current active visitors
-
-## Remote Usage (No Install)
-
-A hosted instance is available at `https://umami-mcp.macawls.dev/mcp`. You can connect to it directly from any MCP client that supports HTTP transport — no binary or Docker needed.
-
-Credentials are passed via `X-Umami-*` headers on the `initialize` request. Query parameters are also supported as a fallback but deprecated.
-
-### Claude Desktop
-
-Claude Desktop does not support custom headers, so credentials are passed as query parameters:
-
-```json
-{
-  "mcpServers": {
-    "umami": {
-      "type": "url",
-      "url": "https://umami-mcp.macawls.dev/mcp?umamiHost=https://your-instance.com&umamiUsername=admin&umamiPassword=pass"
-    }
-  }
-}
-```
-
-### VS Code (GitHub Copilot)
-
-Add to `.vscode/mcp.json` with credentials in headers:
+Add to `.vscode/mcp.json`:
 
 ```json
 {
@@ -310,7 +133,10 @@ Add to `.vscode/mcp.json` with credentials in headers:
 }
 ```
 
-### Claude Code
+</details>
+
+<details>
+<summary><strong>Claude Code</strong></summary>
 
 ```bash
 claude mcp add --transport http \
@@ -320,7 +146,10 @@ claude mcp add --transport http \
   umami https://umami-mcp.macawls.dev/mcp
 ```
 
-### Cursor
+</details>
+
+<details>
+<summary><strong>Cursor</strong></summary>
 
 Add to `.cursor/mcp.json`:
 
@@ -339,7 +168,10 @@ Add to `.cursor/mcp.json`:
 }
 ```
 
-### Windsurf
+</details>
+
+<details>
+<summary><strong>Windsurf</strong></summary>
 
 Add to `~/.codeium/windsurf/mcp_config.json`:
 
@@ -358,7 +190,10 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 }
 ```
 
-### OpenCode
+</details>
+
+<details>
+<summary><strong>OpenCode</strong></summary>
 
 Add to `opencode.json`:
 
@@ -378,71 +213,23 @@ Add to `opencode.json`:
 }
 ```
 
-### Other Clients
+</details>
+
+<details>
+<summary><strong>Other Clients</strong></summary>
 
 Any MCP client that supports Streamable HTTP can connect to `https://umami-mcp.macawls.dev/mcp` with credentials in `X-Umami-Host`, `X-Umami-Username`, and `X-Umami-Password` headers.
 
-## Transport Modes
+</details>
 
-The server supports two transport modes, controlled by the `TRANSPORT` environment variable:
+### Local
 
-### Stdio (default)
+Run the binary or Docker image locally. Credentials are set via environment variables.
 
-Used by local MCP clients like Claude Desktop, VS Code, Cursor, etc. This is the default — no extra configuration needed.
+<details open>
+<summary><strong>Claude Desktop</strong></summary>
 
-### HTTP
-
-The server exposes a `/mcp` endpoint that speaks Streamable HTTP. Use this for self-hosting or remote deployments.
-
-```bash
-TRANSPORT=http PORT=9999 ./umami-mcp-server
-```
-
-Credentials are passed via `X-Umami-*` headers on the `initialize` request:
-
-```bash
-curl -X POST "http://localhost:9999/mcp" \
-  -H "Content-Type: application/json" \
-  -H "X-Umami-Host: https://analytics.example.com" \
-  -H "X-Umami-Username: admin" \
-  -H "X-Umami-Password: pass" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize"}'
-```
-
-The response includes a `Mcp-Session-Id` header to use for subsequent requests.
-
-#### Environment Variables
-
-| Variable | Default | Description |
-|---|---|---|
-| `TRANSPORT` | `stdio` | Transport mode (`stdio` or `http`) |
-| `PORT` | `8080` | HTTP server port |
-| `ALLOWED_ORIGINS` | `*` | Comma-separated CORS allowed origins |
-| `MAX_SESSIONS` | `1000` | Maximum concurrent HTTP sessions |
-| `UMAMI_TEAM_ID` | | Team ID for team-based Umami setups (see [Team Websites](#team-websites)) |
-
-### Docker
-
-When using Docker, the image defaults to HTTP mode:
-
-```bash
-docker run -p 8080:8080 ghcr.io/macawls/umami-mcp-server
-```
-
-For local stdio usage with Docker, override the transport:
-
-```bash
-docker run -i --rm \
-  -e TRANSPORT=stdio \
-  -e UMAMI_URL="https://your-instance.com" \
-  -e UMAMI_USERNAME="username" \
-  -e UMAMI_PASSWORD="password" \
-  ghcr.io/macawls/umami-mcp-server
-```
-
-## Team Websites
-
-If your Umami instance uses teams and your websites are assigned to a team rather than individual users, `get_websites` may return an empty list. Set the `UMAMI_TEAM_ID` environment variable to fetch websites from your team instead:
+Add to your config (`%APPDATA%\Claude\claude_desktop_config.json` on Windows, `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
 
 ```json
 {
@@ -452,19 +239,170 @@ If your Umami instance uses teams and your websites are assigned to a team rathe
       "env": {
         "UMAMI_URL": "https://your-umami-instance.com",
         "UMAMI_USERNAME": "your-username",
-        "UMAMI_PASSWORD": "your-password",
-        "UMAMI_TEAM_ID": "your-team-id"
+        "UMAMI_PASSWORD": "your-password"
       }
     }
   }
 }
 ```
 
-For HTTP transport, pass the team ID via the `X-Umami-Team-Id` header.
+</details>
 
-You can find your team ID in your Umami dashboard under **Settings → Teams**.
+<details>
+<summary><strong>VS Code (GitHub Copilot)</strong></summary>
 
-## Alternative Configuration
+Create `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "umami": {
+      "command": "~/go/bin/umami-mcp-server",
+      "env": {
+        "UMAMI_URL": "https://your-umami-instance.com",
+        "UMAMI_USERNAME": "your-username",
+        "UMAMI_PASSWORD": "your-password"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Claude Code</strong></summary>
+
+```bash
+claude mcp add \
+  umami-mcp-server \
+  -e UMAMI_URL="https://your-umami-instance.com" \
+  -e UMAMI_USERNAME="your-username" \
+  -e UMAMI_PASSWORD="your-password" \
+  -- ~/go/bin/umami-mcp-server
+```
+
+</details>
+
+<details>
+<summary><strong>Cursor</strong></summary>
+
+Add to `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "umami": {
+      "command": "~/go/bin/umami-mcp-server",
+      "env": {
+        "UMAMI_URL": "https://your-umami-instance.com",
+        "UMAMI_USERNAME": "your-username",
+        "UMAMI_PASSWORD": "your-password"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Windsurf</strong></summary>
+
+Add to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "umami": {
+      "command": "~/go/bin/umami-mcp-server",
+      "env": {
+        "UMAMI_URL": "https://your-umami-instance.com",
+        "UMAMI_USERNAME": "your-username",
+        "UMAMI_PASSWORD": "your-password"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Zed</strong></summary>
+
+Add to your Zed settings under `assistant.mcp_servers`:
+
+```json
+{
+  "umami": {
+    "command": "~/go/bin/umami-mcp-server",
+    "env": {
+      "UMAMI_URL": "https://your-umami-instance.com",
+      "UMAMI_USERNAME": "your-username",
+      "UMAMI_PASSWORD": "your-password"
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Docker</strong></summary>
+
+For clients that use a `command` field (Claude Desktop, Cursor, etc.):
+
+```json
+{
+  "mcpServers": {
+    "umami": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-e", "UMAMI_URL",
+        "-e", "UMAMI_USERNAME",
+        "-e", "UMAMI_PASSWORD",
+        "ghcr.io/macawls/umami-mcp-server"
+      ],
+      "env": {
+        "UMAMI_URL": "https://your-umami-instance.com",
+        "UMAMI_USERNAME": "your-username",
+        "UMAMI_PASSWORD": "your-password"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+## Available Tools
+
+| Tool | Description |
+|---|---|
+| `get_websites` | List all websites (call this first to get website IDs) |
+| `get_stats` | Aggregated statistics — pageviews, visitors, bounces, total time |
+| `get_pageviews` | Pageview and session counts grouped by time unit |
+| `get_metrics` | Breakdown by page, referrer, browser, OS, device, country, etc. |
+| `get_active` | Current active visitor count in real-time |
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `UMAMI_URL` | *required* | Your Umami instance URL |
+| `UMAMI_USERNAME` | *required* | Umami username |
+| `UMAMI_PASSWORD` | *required* | Umami password |
+| `UMAMI_TEAM_ID` | | Team ID for [team-based setups](#team-websites) |
+| `TRANSPORT` | `stdio` | Transport mode (`stdio` or `http`) |
+| `PORT` | `8080` | HTTP server port |
+| `ALLOWED_ORIGINS` | `*` | Comma-separated CORS allowed origins |
+| `MAX_SESSIONS` | `1000` | Maximum concurrent HTTP sessions |
+
+### Config File
 
 Instead of environment variables, create a `config.yaml` file next to the binary:
 
@@ -472,10 +410,32 @@ Instead of environment variables, create a `config.yaml` file next to the binary
 umami_url: https://your-umami-instance.com
 username: your-username
 password: your-password
-team_id: your-team-id  # optional, for team-based setups
+team_id: your-team-id  # optional
 ```
 
 Environment variables take priority over the config file.
+
+### Team Websites
+
+If your Umami instance uses teams and your websites are assigned to a team rather than individual users, `get_websites` may return an empty list. Set `UMAMI_TEAM_ID` to fetch websites from your team instead. For HTTP transport, use the `X-Umami-Team-Id` header.
+
+You can find your team ID in your Umami dashboard under **Settings > Teams**.
+
+## Self-Hosting (HTTP Transport)
+
+The server supports Streamable HTTP for remote deployments. Set `TRANSPORT=http` to expose a `/mcp` endpoint:
+
+```bash
+TRANSPORT=http PORT=9999 ./umami-mcp-server
+```
+
+Credentials are passed via `X-Umami-*` headers on the `initialize` request. The response includes a `Mcp-Session-Id` header for subsequent requests.
+
+Docker defaults to HTTP mode:
+
+```bash
+docker run -p 8080:8080 ghcr.io/macawls/umami-mcp-server
+```
 
 ## Build from Source
 
@@ -487,21 +447,10 @@ go build -o umami-mcp
 
 ## Troubleshooting
 
-### Binary won't run
-
-- **macOS**: Run `xattr -c umami-mcp-server` to remove quarantine
-- **Linux**: Run `chmod +x umami-mcp-server` to make executable
-
-### Connection errors
-
-- Verify your Umami instance is accessible
-- Check your credentials are correct
-
-### Tools not showing up
-
-- Check your MCP client logs for errors
-- Verify the binary path is absolute
-- Try running the binary directly to check for errors
+- **macOS binary won't run**: `xattr -c umami-mcp-server` to remove quarantine
+- **Linux binary won't run**: `chmod +x umami-mcp-server`
+- **Connection errors**: Verify your Umami instance is accessible and credentials are correct
+- **Tools not showing up**: Check your MCP client logs, verify the binary path is absolute
 
 ## License
 
