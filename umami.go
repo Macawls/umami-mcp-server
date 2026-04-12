@@ -11,7 +11,10 @@ import (
 	"time"
 )
 
-const metricTypePath = "path"
+const (
+	metricTypePath    = "path"
+	websitesBasePath  = "/api/websites"
+)
 
 type UmamiClient struct {
 	baseURL    string
@@ -122,7 +125,7 @@ func (c *UmamiClient) GetWebsites(includeTeams bool) ([]Website, error) {
 	if c.teamID != "" {
 		endpoint = fmt.Sprintf("/api/teams/%s/websites", c.teamID)
 	} else {
-		endpoint = "/api/websites"
+		endpoint = websitesBasePath
 		if includeTeams {
 			params = map[string]string{"includeTeams": "true"}
 		}
@@ -166,7 +169,7 @@ func (c *UmamiClient) GetStats(websiteID, startDate, endDate string) (*Stats, er
 		"endAt":   endDate,
 	}
 
-	data, err := c.doRequest(fmt.Sprintf("/api/websites/%s/stats", websiteID), params)
+	data, err := c.doRequest(fmt.Sprintf(websitesBasePath+"/%s/stats", websiteID), params)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +194,7 @@ func (c *UmamiClient) GetPageViews(websiteID, startDate, endDate, unit string) (
 		"unit":    unit,
 	}
 
-	data, err := c.doRequest(fmt.Sprintf("/api/websites/%s/pageviews", websiteID), params)
+	data, err := c.doRequest(fmt.Sprintf(websitesBasePath+"/%s/pageviews", websiteID), params)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +232,7 @@ func (c *UmamiClient) GetMetrics(websiteID, startDate, endDate, metricType strin
 		"limit":   fmt.Sprintf("%d", limit),
 	}
 
-	data, err := c.doRequest(fmt.Sprintf("/api/websites/%s/metrics", websiteID), params)
+	data, err := c.doRequest(fmt.Sprintf(websitesBasePath+"/%s/metrics", websiteID), params)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +246,7 @@ func (c *UmamiClient) GetMetrics(websiteID, startDate, endDate, metricType strin
 }
 
 func (c *UmamiClient) GetActive(websiteID string) ([]Metric, error) {
-	data, err := c.doRequest(fmt.Sprintf("/api/websites/%s/active", websiteID), nil)
+	data, err := c.doRequest(fmt.Sprintf(websitesBasePath+"/%s/active", websiteID), nil)
 	if err != nil {
 		return nil, err
 	}
