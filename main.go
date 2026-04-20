@@ -79,7 +79,12 @@ func main() {
 			log.Fatalf("Failed to load config: %v", err)
 		}
 
-		client := NewUmamiClient(config.UmamiURL, config.Username, config.Password)
+		var client *UmamiClient
+		if config.APIKey != "" {
+			client = NewUmamiClientWithAPIKey(config.UmamiURL, config.APIKey)
+		} else {
+			client = NewUmamiClient(config.UmamiURL, config.Username, config.Password)
+		}
 		client.teamID = config.TeamID
 		if err := client.Authenticate(); err != nil {
 			log.Fatalf("Failed to authenticate with Umami: %v", err)

@@ -12,6 +12,7 @@ type Config struct {
 	UmamiURL string `yaml:"umami_url"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
+	APIKey   string `yaml:"api_key"`
 	TeamID   string `yaml:"team_id"`
 }
 
@@ -39,12 +40,19 @@ func LoadConfig() (*Config, error) {
 	if password := os.Getenv("UMAMI_PASSWORD"); password != "" {
 		config.Password = password
 	}
+	if apiKey := os.Getenv("UMAMI_API_KEY"); apiKey != "" {
+		config.APIKey = apiKey
+	}
 	if teamID := os.Getenv("UMAMI_TEAM_ID"); teamID != "" {
 		config.TeamID = teamID
 	}
 
-	if config.UmamiURL == "" || config.Username == "" || config.Password == "" {
-		return nil, fmt.Errorf("missing required configuration: UMAMI_URL, UMAMI_USERNAME, UMAMI_PASSWORD")
+	if config.UmamiURL == "" {
+		return nil, fmt.Errorf("missing required configuration: UMAMI_URL")
+	}
+	if config.APIKey == "" && (config.Username == "" || config.Password == "") {
+		return nil, fmt.Errorf("missing required configuration: set UMAMI_API_KEY " +
+			"(for Umami Cloud) or both UMAMI_USERNAME and UMAMI_PASSWORD (for self-hosted)")
 	}
 
 	return config, nil

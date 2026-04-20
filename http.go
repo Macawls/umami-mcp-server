@@ -50,7 +50,8 @@ func (h *HTTPHandler) setCORS(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.Header().Set("Access-Control-Allow-Headers",
-		"Content-Type, Authorization, Mcp-Session-Id, X-Umami-Host, X-Umami-Username, X-Umami-Password")
+		"Content-Type, Authorization, Mcp-Session-Id, "+
+			"X-Umami-Host, X-Umami-Username, X-Umami-Password, X-Umami-Api-Key, X-Umami-Team-Id")
 	w.Header().Set("Access-Control-Expose-Headers", "Mcp-Session-Id")
 }
 
@@ -127,26 +128,67 @@ func (h *HTTPHandler) handlePost(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
-func (h *HTTPHandler) handleInitialize(w http.ResponseWriter, r *http.Request, req Request) {
-	umamiHost := r.Header.Get("X-Umami-Host")
-	umamiUsername := r.Header.Get("X-Umami-Username")
-	umamiPassword := r.Header.Get("X-Umami-Password")
+type umamiCreds struct {
+	host     string
+	username string
+	password string
+	apiKey   string
+}
 
-	if umamiHost == "" || umamiUsername == "" || umamiPassword == "" {
-		query := r.URL.Query()
-		umamiHost = query.Get("umamiHost")
-		umamiUsername = query.Get("umamiUsername")
-		umamiPassword = query.Get("umamiPassword")
+func (c umamiCreds) valid() bool {
+	if c.host == "" {
+		return false
+	}
+	if c.apiKey != "" {
+		return true
+	}
+	return c.username != "" && c.password != ""
+}
 
-		if umamiHost != "" || umamiUsername != "" || umamiPassword != "" {
-			log.Printf("DEPRECATED: credentials in query params — use X-Umami-* headers instead")
-		}
+func extractUmamiCreds(r *http.Request) umamiCreds {
+	creds := umamiCreds{
+		host:     r.Header.Get("X-Umami-Host"),
+		username: r.Header.Get("X-Umami-Username"),
+		password: r.Header.Get("X-Umami-Password"),
+		apiKey:   r.Header.Get("X-Umami-Api-Key"),
+	}
+	if creds.valid() {
+		return creds
 	}
 
-	if umamiHost == "" || umamiUsername == "" || umamiPassword == "" {
+	query := r.URL.Query()
+	qHost := query.Get("umamiHost")
+	qUser := query.Get("umamiUsername")
+	qPass := query.Get("umamiPassword")
+	qKey := query.Get("umamiApiKey")
+	if qHost != "" || qUser != "" || qPass != "" || qKey != "" {
+		log.Printf("DEPRECATED: credentials in query params — use X-Umami-* headers instead")
+	}
+	if creds.host == "" {
+		creds.host = qHost
+	}
+	if creds.username == "" {
+		creds.username = qUser
+	}
+	if creds.password == "" {
+		creds.password = qPass
+	}
+	if creds.apiKey == "" {
+		creds.apiKey = qKey
+	}
+	return creds
+}
+
+const missingCredsMsg = "Missing required credentials: provide X-Umami-Host plus either " +
+	"X-Umami-Api-Key (Umami Cloud) or X-Umami-Username and X-Umami-Password (self-hosted)"
+
+func (h *HTTPHandler) handleInitialize(w http.ResponseWriter, r *http.Request, req Request) {
+	creds := extractUmamiCreds(r)
+
+	if !creds.valid() {
 		writeJSONRPCError(w, req.ID, &Error{
 			Code:    -32602,
-			Message: "Missing required credentials: provide X-Umami-Host, X-Umami-Username, X-Umami-Password headers",
+			Message: missingCredsMsg,
 		})
 		return
 	}
@@ -159,7 +201,12 @@ func (h *HTTPHandler) handleInitialize(w http.ResponseWriter, r *http.Request, r
 		return
 	}
 
-	client := NewUmamiClient(umamiHost, umamiUsername, umamiPassword)
+	var client *UmamiClient
+	if creds.apiKey != "" {
+		client = NewUmamiClientWithAPIKey(creds.host, creds.apiKey)
+	} else {
+		client = NewUmamiClient(creds.host, creds.username, creds.password)
+	}
 	if teamID := r.Header.Get("X-Umami-Team-Id"); teamID != "" {
 		client.teamID = teamID
 	}
@@ -183,7 +230,7 @@ func (h *HTTPHandler) handleInitialize(w http.ResponseWriter, r *http.Request, r
 	data, _ := json.Marshal(resp)
 	_, _ = w.Write(data)
 
-	log.Printf("New session %s for %s", sessionID, umamiHost)
+	log.Printf("New session %s for %s", sessionID, creds.host)
 }
 
 func (h *HTTPHandler) handleDelete(w http.ResponseWriter, r *http.Request) {

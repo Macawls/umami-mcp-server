@@ -38,6 +38,57 @@ func TestUmamiClient_Authenticate(t *testing.T) {
 	}
 }
 
+func TestUmamiClient_APIKey_NoLogin(t *testing.T) {
+	loginCalled := false
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/auth/login" {
+			loginCalled = true
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		if r.URL.Path != "/v1/websites" {
+			t.Errorf("Expected path /v1/websites, got %s", r.URL.Path)
+		}
+		if r.Header.Get("x-umami-api-key") != "cloud-key" {
+			t.Errorf("Expected x-umami-api-key=cloud-key, got %s", r.Header.Get("x-umami-api-key"))
+		}
+		if r.Header.Get("Authorization") != "" {
+			t.Errorf("Expected no Authorization header, got %s", r.Header.Get("Authorization"))
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]any{
+				{
+					"id":        "cloud-site-1",
+					"name":      "Cloud Site",
+					"domain":    "cloud.example.com",
+					"createdAt": "2025-01-01T00:00:00Z",
+				},
+			},
+		})
+	}))
+	defer server.Close()
+
+	client := NewUmamiClientWithAPIKey(server.URL, "cloud-key")
+
+	if err := client.Authenticate(); err != nil {
+		t.Fatalf("Authenticate should be a no-op for API key mode, got: %v", err)
+	}
+	if loginCalled {
+		t.Error("Expected no login request in API key mode")
+	}
+
+	websites, err := client.GetWebsites(false)
+	if err != nil {
+		t.Fatalf("GetWebsites failed: %v", err)
+	}
+	if len(websites) != 1 || websites[0].ID != "cloud-site-1" {
+		t.Errorf("Unexpected websites: %+v", websites)
+	}
+}
+
 func TestUmamiClient_GetWebsites(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/websites" {

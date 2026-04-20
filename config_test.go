@@ -32,6 +32,21 @@ func TestLoadConfig(t *testing.T) {
 			envVars: map[string]string{},
 			wantErr: true,
 		},
+		{
+			name: "valid_api_key",
+			envVars: map[string]string{
+				"UMAMI_URL":     "https://api.umami.is",
+				"UMAMI_API_KEY": "secret-key",
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing_auth",
+			envVars: map[string]string{
+				"UMAMI_URL": "https://test.com",
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {

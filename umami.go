@@ -11,32 +11,54 @@ import (
 	"time"
 )
 
-const (
-	metricTypePath    = "path"
-	websitesBasePath  = "/api/websites"
-)
+const metricTypePath = "path"
 
 type UmamiClient struct {
-	baseURL    string
-	username   string
-	password   string
-	token      string
-	teamID     string
-	httpClient *http.Client
+	baseURL     string
+	username    string
+	password    string
+	apiKey      string
+	apiBasePath string
+	token       string
+	teamID      string
+	httpClient  *http.Client
 }
 
 func NewUmamiClient(baseURL, username, password string) *UmamiClient {
-	baseURL = strings.TrimSuffix(baseURL, "/")
-
 	return &UmamiClient{
-		baseURL:    baseURL,
-		username:   username,
-		password:   password,
-		httpClient: &http.Client{Timeout: 30 * time.Second},
+		baseURL:     strings.TrimSuffix(baseURL, "/"),
+		username:    username,
+		password:    password,
+		apiBasePath: "/api",
+		httpClient:  &http.Client{Timeout: 30 * time.Second},
 	}
 }
 
+func NewUmamiClientWithAPIKey(baseURL, apiKey string) *UmamiClient {
+	return &UmamiClient{
+		baseURL:     strings.TrimSuffix(baseURL, "/"),
+		apiKey:      apiKey,
+		apiBasePath: "/v1",
+		httpClient:  &http.Client{Timeout: 30 * time.Second},
+	}
+}
+
+func (c *UmamiClient) basePath() string {
+	if c.apiBasePath == "" {
+		return "/api"
+	}
+	return c.apiBasePath
+}
+
+func (c *UmamiClient) websitesPath() string {
+	return c.basePath() + "/websites"
+}
+
 func (c *UmamiClient) Authenticate() error {
+	if c.apiKey != "" {
+		return nil
+	}
+
 	payload := map[string]string{
 		"username": c.username,
 		"password": c.password,
@@ -90,7 +112,11 @@ func (c *UmamiClient) doRequest(path string, params map[string]string) ([]byte, 
 		req.URL.RawQuery = q.Encode()
 	}
 
-	req.Header.Set("Authorization", "Bearer "+c.token)
+	if c.apiKey != "" {
+		req.Header.Set("x-umami-api-key", c.apiKey)
+	} else {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.httpClient.Do(req)
@@ -123,9 +149,9 @@ func (c *UmamiClient) GetWebsites(includeTeams bool) ([]Website, error) {
 	var params map[string]string
 
 	if c.teamID != "" {
-		endpoint = fmt.Sprintf("/api/teams/%s/websites", c.teamID)
+		endpoint = fmt.Sprintf("%s/teams/%s/websites", c.basePath(), c.teamID)
 	} else {
-		endpoint = websitesBasePath
+		endpoint = c.websitesPath()
 		if includeTeams {
 			params = map[string]string{"includeTeams": "true"}
 		}
@@ -169,7 +195,7 @@ func (c *UmamiClient) GetStats(websiteID, startDate, endDate string) (*Stats, er
 		"endAt":   endDate,
 	}
 
-	data, err := c.doRequest(fmt.Sprintf(websitesBasePath+"/%s/stats", websiteID), params)
+	data, err := c.doRequest(fmt.Sprintf("%s/%s/stats", c.websitesPath(), websiteID), params)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +220,7 @@ func (c *UmamiClient) GetPageViews(websiteID, startDate, endDate, unit string) (
 		"unit":    unit,
 	}
 
-	data, err := c.doRequest(fmt.Sprintf(websitesBasePath+"/%s/pageviews", websiteID), params)
+	data, err := c.doRequest(fmt.Sprintf("%s/%s/pageviews", c.websitesPath(), websiteID), params)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +258,7 @@ func (c *UmamiClient) GetMetrics(websiteID, startDate, endDate, metricType strin
 		"limit":   fmt.Sprintf("%d", limit),
 	}
 
-	data, err := c.doRequest(fmt.Sprintf(websitesBasePath+"/%s/metrics", websiteID), params)
+	data, err := c.doRequest(fmt.Sprintf("%s/%s/metrics", c.websitesPath(), websiteID), params)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +272,7 @@ func (c *UmamiClient) GetMetrics(websiteID, startDate, endDate, metricType strin
 }
 
 func (c *UmamiClient) GetActive(websiteID string) ([]Metric, error) {
-	data, err := c.doRequest(fmt.Sprintf(websitesBasePath+"/%s/active", websiteID), nil)
+	data, err := c.doRequest(fmt.Sprintf("%s/%s/active", c.websitesPath(), websiteID), nil)
 	if err != nil {
 		return nil, err
 	}

@@ -393,9 +393,10 @@ For clients that use a `command` field (Claude Desktop, Cursor, etc.):
 
 | Variable | Default | Description |
 |---|---|---|
-| `UMAMI_URL` | *required* | Your Umami instance URL |
-| `UMAMI_USERNAME` | *required* | Umami username |
-| `UMAMI_PASSWORD` | *required* | Umami password |
+| `UMAMI_URL` | *required* | Your Umami instance URL (use `https://api.umami.is` for Umami Cloud) |
+| `UMAMI_USERNAME` | *required for self-hosted* | Umami username |
+| `UMAMI_PASSWORD` | *required for self-hosted* | Umami password |
+| `UMAMI_API_KEY` | *required for Umami Cloud* | API key from your Umami Cloud account (alternative to username/password) |
 | `UMAMI_TEAM_ID` | | Team ID for [team-based setups](#team-websites) |
 | `TRANSPORT` | `stdio` | Transport mode (`stdio` or `http`) |
 | `PORT` | `8080` | HTTP server port |
@@ -413,7 +414,18 @@ password: your-password
 team_id: your-team-id  # optional
 ```
 
+For Umami Cloud, use an API key instead:
+
+```yaml
+umami_url: https://api.umami.is
+api_key: your-api-key
+```
+
 Environment variables take priority over the config file.
+
+### Umami Cloud
+
+Umami Cloud (the hosted version at [cloud.umami.is](https://cloud.umami.is)) does not support username/password authentication. Use an API key from your Umami Cloud account settings and set `UMAMI_URL=https://api.umami.is` together with `UMAMI_API_KEY=...`. For HTTP transport, send the `X-Umami-Api-Key` header instead of `X-Umami-Username`/`X-Umami-Password`.
 
 ### Team Websites
 
