@@ -108,5 +108,89 @@
       },
       "required": ["website_id"]
     }
+  },
+  {
+    "name": "get_sessions",
+    "description": "List individual visitor sessions for a website over a date range, with pagination. Returns an object with 'data' (array of sessions, each with id, browser, os, device, country, region, city, language, screen, visits, views, firstAt, lastAt) plus 'count' (total sessions matching), 'page', and 'pageSize'. Each session id is what session replay (the recorder.js feature) records — use 'count' to see how many sessions/recordings exist, and pass a session 'id' to get_session_activity to inspect what happened in it. Check the website createdAt first; requesting before creation returns an empty list.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "website_id": {
+          "type": "string",
+          "description": "The website ID from get_websites"
+        },
+        "start_date": {
+          "type": "string",
+          "description": "Start date. Accepts ISO 8601 date strings (e.g. '2026-03-23') or Unix timestamps in milliseconds. ISO dates are RECOMMENDED. MUST be after website createdAt."
+        },
+        "end_date": {
+          "type": "string",
+          "description": "End date. Accepts ISO 8601 date strings (e.g. '2026-03-23') or Unix timestamps in milliseconds. ISO dates are RECOMMENDED. Must be after start_date."
+        },
+        "search": {
+          "type": "string",
+          "description": "Optional free-text filter (matches session fields such as country, browser, os, etc.)."
+        },
+        "page": {
+          "type": "integer",
+          "description": "Page number for pagination (1-based).",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "description": "Sessions per page. Increase (e.g. 50-100) to retrieve more in one call.",
+          "default": 20
+        }
+      },
+      "required": ["website_id", "start_date", "end_date"]
+    }
+  },
+  {
+    "name": "get_session_stats",
+    "description": "Get aggregated session totals for a website over a date range. Returns flat numeric fields: pageviews, visitors, visits, countries, and events. Useful as a quick scope check before paging through get_sessions. Check the website createdAt first.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "website_id": {
+          "type": "string",
+          "description": "The website ID from get_websites"
+        },
+        "start_date": {
+          "type": "string",
+          "description": "Start date. Accepts ISO 8601 date strings (e.g. '2026-03-23') or Unix timestamps in milliseconds. ISO dates are RECOMMENDED. MUST be after website createdAt."
+        },
+        "end_date": {
+          "type": "string",
+          "description": "End date. Accepts ISO 8601 date strings (e.g. '2026-03-23') or Unix timestamps in milliseconds. ISO dates are RECOMMENDED. Must be after start_date."
+        }
+      },
+      "required": ["website_id", "start_date", "end_date"]
+    }
+  },
+  {
+    "name": "get_session_activity",
+    "description": "Get the ordered activity timeline (pageviews + events) for a single session, identified by a session id from get_sessions. Returns an array of entries with createdAt, urlPath, urlQuery, referrerDomain, eventType (1 = pageview, 2 = custom event), eventName, and visitId. This is the closest data-level view of what a session replay shows — the sequence of pages and actions during the visit. Optionally bound it to a time window.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "website_id": {
+          "type": "string",
+          "description": "The website ID from get_websites"
+        },
+        "session_id": {
+          "type": "string",
+          "description": "The session id from get_sessions (the 'id' field of a session)."
+        },
+        "start_date": {
+          "type": "string",
+          "description": "Optional. Start of the activity window (ISO 8601 date or Unix ms). Defaults to the beginning of time, so the whole session is returned. Pass the session's firstAt to scope tightly."
+        },
+        "end_date": {
+          "type": "string",
+          "description": "Optional. End of the activity window (ISO 8601 date or Unix ms). Defaults to now. Pass the session's lastAt to scope tightly."
+        }
+      },
+      "required": ["website_id", "session_id"]
+    }
   }
 ]

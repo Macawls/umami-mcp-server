@@ -559,3 +559,108 @@ func TestUmamiClient_ErrorHandling(t *testing.T) {
 		})
 	}
 }
+
+func TestUmamiClient_GetSessions(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/websites/web-1/sessions" {
+			t.Errorf("Expected path /api/websites/web-1/sessions, got %s", r.URL.Path)
+		}
+		q := r.URL.Query()
+		if q.Get("startAt") != "1000" || q.Get("endAt") != "2000" {
+			t.Errorf("Expected startAt=1000 endAt=2000, got %s/%s", q.Get("startAt"), q.Get("endAt"))
+		}
+		if q.Get("search") != "SE" {
+			t.Errorf("Expected search=SE, got %s", q.Get("search"))
+		}
+		if q.Get("pageSize") != "50" {
+			t.Errorf("Expected pageSize=50, got %s", q.Get("pageSize"))
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]any{
+				{"id": "sess-1", "browser": "chrome", "country": "SE", "views": 7},
+			},
+			"count":    407,
+			"page":     1,
+			"pageSize": 50,
+		})
+	}))
+	defer server.Close()
+
+	client := &UmamiClient{baseURL: server.URL, token: "test-token", httpClient: &http.Client{}}
+
+	result, err := client.GetSessions("web-1", "1000", "2000", "SE", 0, 50)
+	if err != nil {
+		t.Fatalf("GetSessions failed: %v", err)
+	}
+	if result.Count != 407 {
+		t.Errorf("Expected count 407, got %d", result.Count)
+	}
+	if len(result.Data) != 1 || result.Data[0].ID != "sess-1" || result.Data[0].Views != 7 {
+		t.Errorf("Unexpected session data: %+v", result.Data)
+	}
+}
+
+func TestUmamiClient_GetSessionStats(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/websites/web-1/sessions/stats" {
+			t.Errorf("Expected path /api/websites/web-1/sessions/stats, got %s", r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"pageviews": map[string]int{"value": 3653},
+			"visitors":  map[string]int{"value": 252},
+			"visits":    map[string]int{"value": 569},
+			"countries": map[string]int{"value": 8},
+			"events":    map[string]int{"value": 12},
+		})
+	}))
+	defer server.Close()
+
+	client := &UmamiClient{baseURL: server.URL, token: "test-token", httpClient: &http.Client{}}
+
+	stats, err := client.GetSessionStats("web-1", "1000", "2000")
+	if err != nil {
+		t.Fatalf("GetSessionStats failed: %v", err)
+	}
+	if stats.PageViews != 3653 || stats.Visitors != 252 || stats.Visits != 569 ||
+		stats.Countries != 8 || stats.Events != 12 {
+		t.Errorf("Unexpected stats: %+v", stats)
+	}
+}
+
+func TestUmamiClient_GetSessionActivity(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/websites/web-1/sessions/sess-1/activity" {
+			t.Errorf("Expected path /api/websites/web-1/sessions/sess-1/activity, got %s", r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode([]map[string]any{
+			{"urlPath": "/predict", "eventType": 1, "eventName": ""},
+			{"urlPath": "/pay", "eventType": 2, "eventName": "pay-click"},
+		})
+	}))
+	defer server.Close()
+
+	client := &UmamiClient{baseURL: server.URL, token: "test-token", httpClient: &http.Client{}}
+
+	activity, err := client.GetSessionActivity("web-1", "sess-1", "", "")
+	if err != nil {
+		t.Fatalf("GetSessionActivity failed: %v", err)
+	}
+	if len(activity) != 2 || activity[0].URLPath != "/predict" || activity[1].EventName != "pay-click" {
+		t.Errorf("Unexpected activity: %+v", activity)
+	}
+}
+
+func TestValidateSessionID(t *testing.T) {
+	if err := validateSessionID("550e8400-e29b-41d4-a716-446655440000"); err != nil {
+		t.Errorf("expected valid session ID, got %v", err)
+	}
+	if err := validateSessionID("../../etc"); err == nil {
+		t.Error("expected error for path traversal session ID")
+	}
+}

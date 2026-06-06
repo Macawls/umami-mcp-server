@@ -55,11 +55,14 @@ func TestMCPServer_HandleToolsList(t *testing.T) {
 		t.Fatal("Tools is not []map[string]any")
 	}
 
-	if len(toolsInterface) != 5 {
-		t.Fatalf("Expected 5 tools, got %d", len(toolsInterface))
+	if len(toolsInterface) != 8 {
+		t.Fatalf("Expected 8 tools, got %d", len(toolsInterface))
 	}
 
-	expectedTools := []string{"get_websites", "get_stats", "get_pageviews", "get_metrics", "get_active"}
+	expectedTools := []string{
+		"get_websites", "get_stats", "get_pageviews", "get_metrics", "get_active",
+		"get_sessions", "get_session_stats", "get_session_activity",
+	}
 	for i, tool := range toolsInterface {
 		name, ok := tool["name"].(string)
 		if !ok {
@@ -104,8 +107,8 @@ func TestMCPServer_ToolsJSONValidity(t *testing.T) {
 		t.Fatalf("Failed to parse tools JSON: %v", err)
 	}
 
-	if len(tools) != 5 {
-		t.Fatalf("Expected 5 tools, got %d", len(tools))
+	if len(tools) != 8 {
+		t.Fatalf("Expected 8 tools, got %d", len(tools))
 	}
 
 	for i, tool := range tools {
@@ -137,11 +140,11 @@ func TestMCPServer_HandlePromptsList(t *testing.T) {
 		t.Fatal("Prompts is not []map[string]any")
 	}
 
-	if len(prompts) != 4 {
-		t.Fatalf("Expected 4 prompts, got %d", len(prompts))
+	if len(prompts) != 5 {
+		t.Fatalf("Expected 5 prompts, got %d", len(prompts))
 	}
 
-	expectedPrompts := []string{"analytics-report", "top-pages", "visitor-insights", "realtime-check"}
+	expectedPrompts := []string{"analytics-report", "top-pages", "visitor-insights", "realtime-check", "session-insights"}
 	for i, prompt := range prompts {
 		name, ok := prompt["name"].(string)
 		if !ok {

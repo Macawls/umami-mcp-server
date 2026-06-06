@@ -297,3 +297,139 @@ func (c *UmamiClient) GetActive(websiteID string) ([]Metric, error) {
 	}
 	return metrics, nil
 }
+
+type Session struct {
+	ID        string    `json:"id"`
+	WebsiteID string    `json:"websiteId"`
+	Hostname  string    `json:"hostname"`
+	Browser   string    `json:"browser"`
+	OS        string    `json:"os"`
+	Device    string    `json:"device"`
+	Screen    string    `json:"screen"`
+	Language  string    `json:"language"`
+	Country   string    `json:"country"`
+	Region    string    `json:"region"`
+	City      string    `json:"city"`
+	FirstAt   time.Time `json:"firstAt"`
+	LastAt    time.Time `json:"lastAt"`
+	Visits    int       `json:"visits"`
+	Views     int       `json:"views"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+type SessionList struct {
+	Data     []Session `json:"data"`
+	Count    int       `json:"count"`
+	Page     int       `json:"page"`
+	PageSize int       `json:"pageSize"`
+}
+
+func (c *UmamiClient) GetSessions(
+	websiteID, startDate, endDate, search string, page, pageSize int,
+) (*SessionList, error) {
+	params := map[string]string{
+		"startAt": startDate,
+		"endAt":   endDate,
+	}
+	if search != "" {
+		params["search"] = search
+	}
+	if page > 0 {
+		params["page"] = fmt.Sprintf("%d", page)
+	}
+	if pageSize > 0 {
+		params["pageSize"] = fmt.Sprintf("%d", pageSize)
+	}
+
+	data, err := c.doRequest(fmt.Sprintf("%s/%s/sessions", c.websitesPath(), websiteID), params)
+	if err != nil {
+		return nil, err
+	}
+
+	var result SessionList
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+type SessionStats struct {
+	PageViews int `json:"pageviews"`
+	Visitors  int `json:"visitors"`
+	Visits    int `json:"visits"`
+	Countries int `json:"countries"`
+	Events    int `json:"events"`
+}
+
+type valueField struct {
+	Value int `json:"value"`
+}
+
+func (c *UmamiClient) GetSessionStats(websiteID, startDate, endDate string) (*SessionStats, error) {
+	params := map[string]string{
+		"startAt": startDate,
+		"endAt":   endDate,
+	}
+
+	data, err := c.doRequest(fmt.Sprintf("%s/%s/sessions/stats", c.websitesPath(), websiteID), params)
+	if err != nil {
+		return nil, err
+	}
+
+	var raw struct {
+		PageViews valueField `json:"pageviews"`
+		Visitors  valueField `json:"visitors"`
+		Visits    valueField `json:"visits"`
+		Countries valueField `json:"countries"`
+		Events    valueField `json:"events"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, err
+	}
+
+	return &SessionStats{
+		PageViews: raw.PageViews.Value,
+		Visitors:  raw.Visitors.Value,
+		Visits:    raw.Visits.Value,
+		Countries: raw.Countries.Value,
+		Events:    raw.Events.Value,
+	}, nil
+}
+
+type SessionActivity struct {
+	CreatedAt      time.Time `json:"createdAt"`
+	URLPath        string    `json:"urlPath"`
+	URLQuery       string    `json:"urlQuery"`
+	ReferrerDomain string    `json:"referrerDomain"`
+	EventID        string    `json:"eventId"`
+	EventType      int       `json:"eventType"`
+	EventName      string    `json:"eventName"`
+	VisitID        string    `json:"visitId"`
+	HasData        bool      `json:"hasData"`
+}
+
+func (c *UmamiClient) GetSessionActivity(websiteID, sessionID, startDate, endDate string) ([]SessionActivity, error) {
+	if startDate == "" {
+		startDate = "0"
+	}
+	if endDate == "" {
+		endDate = fmt.Sprintf("%d", time.Now().UnixMilli())
+	}
+	params := map[string]string{
+		"startAt": startDate,
+		"endAt":   endDate,
+	}
+
+	data, err := c.doRequest(
+		fmt.Sprintf("%s/%s/sessions/%s/activity", c.websitesPath(), websiteID, sessionID), params,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var activity []SessionActivity
+	if err := json.Unmarshal(data, &activity); err != nil {
+		return nil, err
+	}
+	return activity, nil
+}

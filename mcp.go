@@ -145,6 +145,12 @@ func (s *MCPServer) processToolCall(rawParams json.RawMessage) (any, *Error) {
 		return s.execGetMetrics(params.Arguments)
 	case "get_active":
 		return s.execGetActive(params.Arguments)
+	case "get_sessions":
+		return s.execGetSessions(params.Arguments)
+	case "get_session_stats":
+		return s.execGetSessionStats(params.Arguments)
+	case "get_session_activity":
+		return s.execGetSessionActivity(params.Arguments)
 	default:
 		return nil, &Error{Code: -32602, Message: fmt.Sprintf("Unknown tool: %s", params.Name)}
 	}
@@ -192,13 +198,23 @@ var promptTemplates = map[string]string{
 	"realtime-check": "First call get_websites to find the target website. " +
 		"Then call get_active to check the current number of active visitors. " +
 		"Report the real-time visitor count.",
+
+	"session-insights": "First call get_websites to find the target website. " +
+		"Then summarize recorded sessions over the last {days} days:\n" +
+		"- get_session_stats for the totals (sessions, pageviews, visitors, events)\n" +
+		"- get_sessions (raise page_size) to list sessions with their device, " +
+		"country, and view counts; note the total 'count'\n" +
+		"- for any notably long or active session, get_session_activity with its " +
+		"id to trace the page/event sequence\n\n" +
+		"Summarize engagement and call out standout sessions.",
 }
 
 var promptDefaults = map[string]map[string]string{
 	"analytics-report": {"days": "30"},
 	"top-pages":        {"days": "7", "limit": "10"},
-	"visitor-insights":  {"days": "30"},
-	"realtime-check":    {},
+	"visitor-insights": {"days": "30"},
+	"realtime-check":   {},
+	"session-insights": {"days": "30"},
 }
 
 func (s *MCPServer) processPromptsGet(rawParams json.RawMessage) (any, *Error) {

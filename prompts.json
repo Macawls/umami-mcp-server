@@ -25,5 +25,12 @@
     "name": "realtime-check",
     "description": "Check current active visitors on a website",
     "arguments": []
+  },
+  {
+    "name": "session-insights",
+    "description": "Summarize recorded visitor sessions over a period",
+    "arguments": [
+      { "name": "days", "description": "Number of days to analyze (default: 30)", "required": false }
+    ]
   }
 ]
