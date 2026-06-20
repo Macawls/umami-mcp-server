@@ -28,7 +28,18 @@ func (s *MCPServer) execGetWebsites(args json.RawMessage) (any, *Error) {
 	return map[string]any{"content": content}, nil
 }
 
-func (s *MCPServer) execGetStats(args json.RawMessage) (any, *Error) {
+func textContent(result any) map[string]any {
+	data, _ := json.MarshalIndent(result, "", "  ")
+	return map[string]any{"content": []map[string]string{{
+		"type": "text",
+		"text": string(data),
+	}}}
+}
+
+func (s *MCPServer) dateRangeQuery(
+	args json.RawMessage, errLabel string,
+	query func(websiteID, startDate, endDate string) (any, error),
+) (any, *Error) {
 	var params struct {
 		WebsiteID string `json:"website_id"`
 		StartDate string `json:"start_date"`
@@ -43,21 +54,18 @@ func (s *MCPServer) execGetStats(args json.RawMessage) (any, *Error) {
 		return nil, &Error{Code: -32602, Message: "Invalid website_id"}
 	}
 
-	params.StartDate = normalizeDate(params.StartDate)
-	params.EndDate = normalizeDate(params.EndDate)
-
-	stats, err := s.client.GetStats(params.WebsiteID, params.StartDate, params.EndDate)
+	result, err := query(params.WebsiteID, normalizeDate(params.StartDate), normalizeDate(params.EndDate))
 	if err != nil {
-		return nil, &Error{Code: -32603, Message: fmt.Sprintf("Failed to get stats: %v", err)}
+		return nil, &Error{Code: -32603, Message: fmt.Sprintf("Failed to get %s: %v", errLabel, err)}
 	}
 
-	data, _ := json.MarshalIndent(stats, "", "  ")
-	content := []map[string]string{{
-		"type": "text",
-		"text": string(data),
-	}}
+	return textContent(result), nil
+}
 
-	return map[string]any{"content": content}, nil
+func (s *MCPServer) execGetStats(args json.RawMessage) (any, *Error) {
+	return s.dateRangeQuery(args, "stats", func(id, start, end string) (any, error) {
+		return s.client.GetStats(id, start, end)
+	})
 }
 
 func (s *MCPServer) execGetPageViews(args json.RawMessage) (any, *Error) {
@@ -156,6 +164,87 @@ func (s *MCPServer) execGetActive(args json.RawMessage) (any, *Error) {
 	}
 
 	data, _ := json.MarshalIndent(active, "", "  ")
+	content := []map[string]string{{
+		"type": "text",
+		"text": string(data),
+	}}
+
+	return map[string]any{"content": content}, nil
+}
+
+func (s *MCPServer) execGetSessions(args json.RawMessage) (any, *Error) {
+	var params struct {
+		WebsiteID string `json:"website_id"`
+		StartDate string `json:"start_date"`
+		EndDate   string `json:"end_date"`
+		Search    string `json:"search"`
+		Page      int    `json:"page"`
+		PageSize  int    `json:"page_size"`
+	}
+
+	if err := json.Unmarshal(args, &params); err != nil {
+		return nil, &Error{Code: -32602, Message: "Invalid arguments"}
+	}
+
+	if err := validateWebsiteID(params.WebsiteID); err != nil {
+		return nil, &Error{Code: -32602, Message: "Invalid website_id"}
+	}
+
+	params.StartDate = normalizeDate(params.StartDate)
+	params.EndDate = normalizeDate(params.EndDate)
+
+	sessions, err := s.client.GetSessions(
+		params.WebsiteID, params.StartDate, params.EndDate, params.Search, params.Page, params.PageSize,
+	)
+	if err != nil {
+		return nil, &Error{Code: -32603, Message: fmt.Sprintf("Failed to get sessions: %v", err)}
+	}
+
+	data, _ := json.MarshalIndent(sessions, "", "  ")
+	content := []map[string]string{{
+		"type": "text",
+		"text": string(data),
+	}}
+
+	return map[string]any{"content": content}, nil
+}
+
+func (s *MCPServer) execGetSessionStats(args json.RawMessage) (any, *Error) {
+	return s.dateRangeQuery(args, "session stats", func(id, start, end string) (any, error) {
+		return s.client.GetSessionStats(id, start, end)
+	})
+}
+
+func (s *MCPServer) execGetSessionActivity(args json.RawMessage) (any, *Error) {
+	var params struct {
+		WebsiteID string `json:"website_id"`
+		SessionID string `json:"session_id"`
+		StartDate string `json:"start_date"`
+		EndDate   string `json:"end_date"`
+	}
+
+	if err := json.Unmarshal(args, &params); err != nil {
+		return nil, &Error{Code: -32602, Message: "Invalid arguments"}
+	}
+
+	if err := validateWebsiteID(params.WebsiteID); err != nil {
+		return nil, &Error{Code: -32602, Message: "Invalid website_id"}
+	}
+	if err := validateSessionID(params.SessionID); err != nil {
+		return nil, &Error{Code: -32602, Message: "Invalid session_id"}
+	}
+
+	params.StartDate = normalizeDate(params.StartDate)
+	params.EndDate = normalizeDate(params.EndDate)
+
+	activity, err := s.client.GetSessionActivity(
+		params.WebsiteID, params.SessionID, params.StartDate, params.EndDate,
+	)
+	if err != nil {
+		return nil, &Error{Code: -32603, Message: fmt.Sprintf("Failed to get session activity: %v", err)}
+	}
+
+	data, _ := json.MarshalIndent(activity, "", "  ")
 	content := []map[string]string{{
 		"type": "text",
 		"text": string(data),

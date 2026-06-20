@@ -48,6 +48,12 @@ Connect your Umami Analytics to any MCP client - Claude Desktop, VS Code, Cursor
 - "What devices and browsers are my users using?"
 - "Show me the user journey - what pages do visitors typically view in sequence?"
 
+### Sessions & Replay
+
+- "How many sessions were recorded last month? List the most active ones"
+- "Walk me through what session <id> did — the pages and events in order"
+- "Which recorded sessions came from mobile in Sweden?"
+
 ### Real-time Monitoring
 
 - "How many people are on my website right now? What pages are they viewing?"
@@ -386,6 +392,9 @@ For clients that use a `command` field (Claude Desktop, Cursor, etc.):
 | `get_pageviews` | Pageview and session counts grouped by time unit |
 | `get_metrics` | Breakdown by page, referrer, browser, OS, device, country, etc. |
 | `get_active` | Current active visitor count in real-time |
+| `get_sessions` | List individual visitor sessions, with total count — the sessions session replay records |
+| `get_session_stats` | Aggregated session totals — pageviews, visitors, visits, countries, events |
+| `get_session_activity` | Ordered pageview/event timeline for a single session |
 
 ## Configuration
 
