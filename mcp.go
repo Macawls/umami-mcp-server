@@ -103,9 +103,9 @@ func (s *MCPServer) processInitialize() any {
 			"version": version,
 		},
 		"capabilities": map[string]any{
-			"tools":     map[string]any{},
-			"prompts":   map[string]any{},
-			"resources": map[string]any{},
+			"tools":     map[string]any{"listChanged": true},
+			"prompts":   map[string]any{"listChanged": true},
+			"resources": map[string]any{"listChanged": true},
 		},
 	}
 }
