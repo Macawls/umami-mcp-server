@@ -54,7 +54,30 @@ func (c *UmamiClient) websitesPath() string {
 	return c.basePath() + "/websites"
 }
 
+const redactedSecretPlaceholder = "**********"
+
+func validateBaseURL(baseURL string) error {
+	if baseURL == redactedSecretPlaceholder {
+		return fmt.Errorf(
+			"host is the literal placeholder %q — your MCP client "+
+				"(e.g. OpenHands) is sending its redacted-secret value "+
+				"instead of the real host; re-enter the host in the client's settings",
+			redactedSecretPlaceholder,
+		)
+	}
+	if !strings.HasPrefix(baseURL, "http://") && !strings.HasPrefix(baseURL, "https://") {
+		return fmt.Errorf(
+			"host must include an http:// or https:// scheme (got %q)",
+			baseURL,
+		)
+	}
+	return nil
+}
+
 func (c *UmamiClient) Authenticate() error {
+	if err := validateBaseURL(c.baseURL); err != nil {
+		return err
+	}
 	if c.apiKey != "" {
 		return nil
 	}
