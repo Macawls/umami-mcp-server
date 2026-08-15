@@ -113,6 +113,50 @@ func TestHTTP_InitializeMissingCredentials(t *testing.T) {
 	}
 }
 
+func TestHTTP_InitializeHostMissingScheme(t *testing.T) {
+	handler := NewHTTPHandler(nil, 0)
+	body := `{"jsonrpc":"2.0","id":1,"method":"initialize"}`
+	req := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(body))
+	req.Header.Set("X-Umami-Host", "blank.com:8080")
+	req.Header.Set("X-Umami-Username", "admin")
+	req.Header.Set("X-Umami-Password", "pass")
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	var resp Response
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+	if resp.Error == nil {
+		t.Fatal("Expected error, got none")
+	}
+	if !strings.Contains(resp.Error.Message, "scheme") {
+		t.Errorf("Expected scheme-related error, got: %q", resp.Error.Message)
+	}
+}
+
+func TestHTTP_InitializeHostIsRedactedPlaceholder(t *testing.T) {
+	handler := NewHTTPHandler(nil, 0)
+	body := `{"jsonrpc":"2.0","id":1,"method":"initialize"}`
+	req := httptest.NewRequest(http.MethodPost, "/mcp", strings.NewReader(body))
+	req.Header.Set("X-Umami-Host", "**********")
+	req.Header.Set("X-Umami-Username", "admin")
+	req.Header.Set("X-Umami-Password", "pass")
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	var resp Response
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+	if resp.Error == nil {
+		t.Fatal("Expected error, got none")
+	}
+	if !strings.Contains(resp.Error.Message, "placeholder") {
+		t.Errorf("Expected placeholder-related error, got: %q", resp.Error.Message)
+	}
+}
+
 func TestHTTP_ToolsList(t *testing.T) {
 	umami := setupTestUmamiServer()
 	defer umami.Close()
